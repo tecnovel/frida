@@ -15,3 +15,6 @@ https://www.st.com/en/microcontrollers-microprocessors/stm32h747xi.html
 
 USB ecm stm32 example
 https://github.com/majbthrd/stm32ecm
+
+Mongoose example for this board
+https://mongoose.ws/documentation/tutorials/stm32/all-make-baremetal-builtin
