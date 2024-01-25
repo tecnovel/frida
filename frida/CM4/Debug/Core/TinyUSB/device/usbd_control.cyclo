@@ -1,0 +1,9 @@
+../Core/TinyUSB/device/usbd_control.c:38:19:dcd_edpt0_status_complete	1
+../Core/TinyUSB/device/usbd_control.c:74:20:_status_stage_xact	2
+../Core/TinyUSB/device/usbd_control.c:81:6:tud_control_status	1
+../Core/TinyUSB/device/usbd_control.c:93:13:_data_stage_xact	6
+../Core/TinyUSB/device/usbd_control.c:111:6:tud_control_xfer	9
+../Core/TinyUSB/device/usbd_control.c:142:6:usbd_control_reset	1
+../Core/TinyUSB/device/usbd_control.c:147:6:usbd_control_set_complete_callback	1
+../Core/TinyUSB/device/usbd_control.c:152:6:usbd_control_set_request	1
+../Core/TinyUSB/device/usbd_control.c:162:6:usbd_control_xfer_cb	15
