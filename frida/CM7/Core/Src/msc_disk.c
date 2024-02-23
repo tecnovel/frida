@@ -109,6 +109,7 @@ bool tud_msc_test_unit_ready_cb(uint8_t lun)
 void tud_msc_capacity_cb(uint8_t lun, uint32_t* block_count, uint16_t* block_size) {
 
 	DRESULT res;
+
 	res = SD_Driver.disk_ioctl(lun, GET_SECTOR_COUNT, block_count);
 	if(res != RES_OK) return;
     res = SD_Driver.disk_ioctl(lun, GET_SECTOR_SIZE, block_size);
@@ -146,10 +147,12 @@ int32_t tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void* buff
     (void) lun;
 
     DWORD sector = lba; // Logical Block Addressing
+    uint16_t blocksize;
+    SD_Driver.disk_ioctl(lun, GET_SECTOR_SIZE, &blocksize);
     //UINT byteRead;
 
     //DRESULT res = disk_read(0, buffer, sector, bufsize / DISK_BLOCK_SIZE);
-    DRESULT res = SD_Driver.disk_read(lun, buffer, sector, bufsize);
+    DRESULT res = SD_Driver.disk_read(lun, buffer, sector, bufsize / blocksize);
     if (res != RES_OK) {
         return -1;
     }
@@ -174,10 +177,12 @@ int32_t tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t* 
     (void) lun;
 
     DWORD sector = lba; // Logical Block Addressing
+    uint16_t blocksize;
+    SD_Driver.disk_ioctl(lun, GET_SECTOR_SIZE, &blocksize);
     //UINT byteWritten;
 
     //DRESULT res = disk_write(0, buffer, sector, bufsize / DISK_BLOCK_SIZE);
-    DRESULT res = SD_Driver.disk_write(lun, buffer, sector, bufsize);
+    DRESULT res = SD_Driver.disk_write(lun, buffer, sector, bufsize / blocksize);
     if (res != RES_OK) {
         return -1;
     }
