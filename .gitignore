@@ -53,6 +53,6 @@ dkms.conf
 
 
 .metadata/*
-*Debug*
-frida\CM4\Debug*
+Debug/
+Release/
 *.cyclo
