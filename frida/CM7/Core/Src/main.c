@@ -24,7 +24,7 @@
 /* USER CODE BEGIN Includes */
 
 #include <ctype.h>
-// #include "mongoose.h"
+#include "mongoose.h"
 #include "msc_disk.h"
 
 /* USER CODE END Includes */
@@ -47,6 +47,15 @@ enum {
 #define HSEM_ID_0 (0U) /* HW semaphore 0*/
 #endif
 
+#define UUID ((uint8_t *) UID_BASE)  // Unique 96-bit chip ID. TRM 39.1
+
+// Helper macro for MAC generation
+#define GENERATE_LOCALLY_ADMINISTERED_MAC()                        \
+  {                                                                \
+    2, UUID[0] ^ UUID[1], UUID[2] ^ UUID[3], UUID[4] ^ UUID[5],    \
+        UUID[6] ^ UUID[7] ^ UUID[8], UUID[9] ^ UUID[10] ^ UUID[11] \
+  }
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -55,6 +64,8 @@ enum {
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+
+RNG_HandleTypeDef hrng;
 
 SD_HandleTypeDef hsd1;
 
@@ -66,6 +77,13 @@ PCD_HandleTypeDef hpcd_USB_OTG_HS;
 
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
+
+/* this is used by this code, ./class/net/net_driver.c, and usb_descriptors.c */
+/* ideally speaking, this should be generated from the hardware's unique ID (if available) */
+/* it is suggested that the first byte is 0x02 to indicate a link-local address */
+uint8_t tud_network_mac_address[6];
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -73,18 +91,107 @@ void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
-static void MX_SDMMC1_SD_Init(void);
 static void MX_USB_OTG_HS_PCD_Init(void);
+static void MX_RNG_Init(void);
+static void MX_SDMMC1_SD_Init(void);
 /* USER CODE BEGIN PFP */
 
-static void cdc_task(void);
-static uint32_t millis(void);
+void cdc_task(void);
 void led_blinking_task(void);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+static struct mg_tcpip_if *s_ifp;
+
+// Network blink
+static void blink_cb(void *arg) {  // Blink periodically
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+  (void) arg;
+}
+
+
+/* Mongoose user functions */
+
+uint64_t mg_millis(void) {  // Let Mongoose use our uptime function
+  return HAL_GetTick();     // Return number of milliseconds since boot
+}
+
+
+// Hardware random generator
+void mg_random(void *buf, size_t len) {  // Use on-board RNG
+  for (size_t n = 0; n < len; n += sizeof(uint32_t)) {
+    uint32_t r;
+    HAL_RNG_GenerateRandomNumber(&hrng, &r);
+    memcpy((char *) buf + n, &r, n + sizeof(r) > len ? len - n : sizeof(r));
+  }
+}
+
+/* Tiny USB Callbacks & Mongoose Communication functions */
+
+// init the mac address of tiny usb
+void init_tud_network_mac_address(void) {
+    // Assuming GENERATE_LOCALLY_ADMINISTERED_MAC is a macro that expands to an initializer based on UUID
+    uint8_t temp_mac_address[6] = GENERATE_LOCALLY_ADMINISTERED_MAC();
+    for (int i = 0; i < 6; i++) {
+        tud_network_mac_address[i] = temp_mac_address[i];
+    }
+}
+
+// callback when data is coming from usb
+bool tud_network_recv_cb(const uint8_t *buf, uint16_t len) {
+  mg_tcpip_qwrite((void *) buf, len, s_ifp);
+  // MG_INFO(("RECV %hu", len));
+  // mg_hexdump(buf, len);
+  tud_network_recv_renew();
+  return true;
+}
+
+
+// callback when network is init
+void tud_network_init_cb(void) {
+}
+
+
+// sends via usb network data (tiny USB)
+uint16_t tud_network_xmit_cb(uint8_t *dst, void *ref, uint16_t arg) {
+  // MG_INFO(("SEND %hu", arg));
+  memcpy(dst, ref, arg);
+  return arg;
+}
+
+// send via usb network (mongoose)
+static size_t usb_tx(const void *buf, size_t len, struct mg_tcpip_if *ifp) {
+  if (!tud_ready()) return 0;
+  while (!tud_network_can_xmit(len)) tud_task();
+  tud_network_xmit((void *) buf, len);
+  (void) ifp;
+  return len;
+}
+
+
+// mongoose aks if usb is working
+static bool usb_up(struct mg_tcpip_if *ifp) {
+  (void) ifp;
+  return tud_inited() && tud_ready() && tud_connected();
+}
+
+
+// website handler
+static void fn(struct mg_connection *c, int ev, void *ev_data) {
+  if (ev == MG_EV_HTTP_MSG) {
+    struct mg_http_message *hm = (struct mg_http_message *) ev_data;
+    if (mg_http_match_uri(hm, "/api/debug")) {
+      int level = mg_json_get_long(hm->body, "$.level", MG_LL_DEBUG);
+      mg_log_set(level);
+      mg_http_reply(c, 200, "", "Debug level set to %d\n", level);
+    } else {
+      mg_http_reply(c, 200, "", "hi\n");
+    }
+  }
+}
 
 /* USER CODE END 0 */
 
@@ -102,6 +209,7 @@ int main(void)
 /* USER CODE END Boot_Mode_Sequence_0 */
 
 /* USER CODE BEGIN Boot_Mode_Sequence_1 */
+
   /* Wait until CPU2 boots and enters in stop mode or timeout*/
   timeout = 0xFFFF;
   while((__HAL_RCC_GET_FLAG(RCC_FLAG_D2CKRDY) != RESET) && (timeout-- > 0));
@@ -109,6 +217,7 @@ int main(void)
   {
   Error_Handler();
   }
+
 /* USER CODE END Boot_Mode_Sequence_1 */
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -149,14 +258,41 @@ __HAL_RCC_HSEM_CLK_ENABLE();
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
-  MX_SDMMC1_SD_Init();
   MX_USB_OTG_HS_PCD_Init();
+  MX_RNG_Init();
+  MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
-  fatfs_init();
 
+
+  struct mg_mgr mgr;        // Initialise
+  mg_mgr_init(&mgr);        // Mongoose event manager
+  mg_log_set(MG_LL_DEBUG);  // Set log level
+
+  MG_INFO(("Init TCP/IP stack ..."));
+  struct mg_tcpip_driver driver = {.tx = usb_tx, .up = usb_up};
+  struct mg_tcpip_if mif = {.mac = GENERATE_LOCALLY_ADMINISTERED_MAC(),
+                            .ip = mg_htonl(MG_U32(192, 168, 3, 1)),
+                            .mask = mg_htonl(MG_U32(255, 255, 255, 0)),
+                            .enable_dhcp_server = true,
+                            .driver = &driver,
+                            .recv_queue.size = 4096};
+  s_ifp = &mif;
+  mg_tcpip_init(&mgr, &mif);
+
+
+  mg_timer_add(&mgr, 500, MG_TIMER_REPEAT, blink_cb, &mgr);
+  mg_http_listen(&mgr, "tcp://0.0.0.0:80", fn, &mgr);
+
+  MG_INFO(("Init USB ..."));
+  init_tud_network_mac_address();
+
+  fatfs_init();
   tud_init(BOARD_TUD_RHPORT);
+
+  MG_INFO(("Init done, starting main loop ..."));
+
 
   /* USER CODE END 2 */
 
@@ -164,7 +300,7 @@ __HAL_RCC_HSEM_CLK_ENABLE();
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+	  mg_mgr_poll(&mgr, 0);
 	  tud_task();
 	  led_blinking_task();
 	  cdc_task();
@@ -202,13 +338,15 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI
-                              |RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSI
+                              |RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE
+                              |RCC_OSCILLATORTYPE_LSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
+  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 5;
@@ -271,6 +409,33 @@ void PeriphCommonClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief RNG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RNG_Init(void)
+{
+
+  /* USER CODE BEGIN RNG_Init 0 */
+
+  /* USER CODE END RNG_Init 0 */
+
+  /* USER CODE BEGIN RNG_Init 1 */
+
+  /* USER CODE END RNG_Init 1 */
+  hrng.Instance = RNG;
+  hrng.Init.ClockErrorDetection = RNG_CED_ENABLE;
+  if (HAL_RNG_Init(&hrng) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RNG_Init 2 */
+
+  /* USER CODE END RNG_Init 2 */
+
 }
 
 /**
@@ -467,6 +632,7 @@ void tud_resume_cb(void) {
 //--------------------------------------------------------------------+
 // USB CDC
 //--------------------------------------------------------------------+
+
 void cdc_task(void) {
   // connected() check for DTR bit
   // Most but not all terminal client set this when making connection
@@ -513,19 +679,12 @@ void tud_cdc_rx_cb(uint8_t itf) {
 //--------------------------------------------------------------------+
 void led_blinking_task(void) {
   static uint32_t start_ms = 0;
-  static bool led_state = false;
 
   // Blink every interval ms
-  if (millis() - start_ms < blink_interval_ms) return; // not enough time
+  if (HAL_GetTick() - start_ms < blink_interval_ms) return; // not enough time
   start_ms += blink_interval_ms;
 
-  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, led_state);
-  led_state = 1 - led_state; // toggle
-}
-
-static uint32_t millis(void)
-{
-	return HAL_GetTick();
+  HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
 }
 
 /* USER CODE END 4 */

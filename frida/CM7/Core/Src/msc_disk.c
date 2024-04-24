@@ -6,6 +6,16 @@
 #include "ff_gen_drv.h"
 #include "sd_diskio.h"
 
+void fatfs_init(void) {
+
+	if(SD_Driver.disk_initialize(0) != 0){
+		while(1){
+			HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+			HAL_Delay(50);
+		}
+	}
+}
+
 #if CFG_TUD_MSC
 
 // whether host does safe-eject
@@ -14,63 +24,6 @@ static bool ejected = false;
 #define DISK_BLOCK_SIZE 512
 
 FRESULT res;
-
-
-void fatfs_init(void) {
-
-    // Mount the filesystem
-    /*FRESULT fres = f_mount(&FatFs, "", 1);
-    if (fres != FR_OK) {
-        // Handle FATFS mount error
-        // Again, you might want to print an error message or indicate an error via LED
-    	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-		HAL_Delay(500);
-
-        return;
-    }*/
-
-
-    /*if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
-	{
-    	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-		HAL_Delay(500);
-	}
-
-    // Optionally, you can open or create a file to test if everything is working
-    res = f_open(&SDFile, "test.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
-    if (res != FR_OK) {
-    	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-		HAL_Delay(500);
-        return;
-    }
-
-    // Close the file, as it was just a test
-    f_close(&SDFile);
-
-    ejected = false;*/
-
-	if(SD_Driver.disk_initialize(0) != 0){
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-		HAL_Delay(500);
-	}
-
-}
 
 // Invoked when received SCSI_CMD_INQUIRY
 // Application fill vendor id, product id and revision with string up to 8, 16, 4 characters respectively

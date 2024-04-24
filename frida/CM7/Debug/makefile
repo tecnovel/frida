@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (11.3.rel1)
+# Toolchain: GNU Tools for STM32 (12.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -14,6 +14,7 @@ RM := rm -rf
 -include FATFS/Target/subdir.mk
 -include FATFS/App/subdir.mk
 -include Drivers/STM32H7xx_HAL_Driver/Src/subdir.mk
+-include Core/mongoose/subdir.mk
 -include Core/TinyUSB/typec/subdir.mk
 -include Core/TinyUSB/portable/wch/subdir.mk
 -include Core/TinyUSB/portable/valentyusb/eptri/subdir.mk
@@ -49,6 +50,7 @@ RM := rm -rf
 -include Core/TinyUSB/portable/chipidea/ci_fs/subdir.mk
 -include Core/TinyUSB/portable/bridgetek/ft9xx/subdir.mk
 -include Core/TinyUSB/portable/analog/max3421/subdir.mk
+-include Core/TinyUSB/lib/networking/subdir.mk
 -include Core/TinyUSB/host/subdir.mk
 -include Core/TinyUSB/device/subdir.mk
 -include Core/TinyUSB/common/subdir.mk

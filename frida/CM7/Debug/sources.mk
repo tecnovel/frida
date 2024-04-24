@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (11.3.rel1)
+# Toolchain: GNU Tools for STM32 (12.3.rel1)
 ################################################################################
 
 ELF_SRCS := 
@@ -39,6 +39,7 @@ Core/TinyUSB/class/video \
 Core/TinyUSB/common \
 Core/TinyUSB/device \
 Core/TinyUSB/host \
+Core/TinyUSB/lib/networking \
 Core/TinyUSB/portable/analog/max3421 \
 Core/TinyUSB/portable/bridgetek/ft9xx \
 Core/TinyUSB/portable/chipidea/ci_fs \
@@ -75,6 +76,7 @@ Core/TinyUSB/portable/valentyusb/eptri \
 Core/TinyUSB/portable/wch \
 Core/TinyUSB \
 Core/TinyUSB/typec \
+Core/mongoose \
 Drivers/STM32H7xx_HAL_Driver/Src \
 FATFS/App \
 FATFS/Target \
