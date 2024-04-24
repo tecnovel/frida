@@ -639,7 +639,7 @@ void cdc_task(void) {
   // if ( tud_cdc_connected() )
   {
     // connected and there are data available
-    if (tud_cdc_available()) {
+    if (tud_cdc_n_available(0)) {
       // read data
       char buf[64];
       uint32_t count = tud_cdc_read(buf, sizeof(buf));
@@ -649,8 +649,8 @@ void cdc_task(void) {
       // Note: Skip echo by commenting out write() and write_flush()
       // for throughput test e.g
       //    $ dd if=/dev/zero of=/dev/ttyACM0 count=10000
-      tud_cdc_write(buf, count);
-      tud_cdc_write_flush();
+      tud_cdc_n_write(0, buf, count);
+      tud_cdc_n_write_flush(0);
     }
   }
 }

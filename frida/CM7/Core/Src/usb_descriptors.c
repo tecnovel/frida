@@ -10,6 +10,9 @@
 #define USB_PID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
                            _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) | _PID_MAP(ECM_RNDIS, 5) | _PID_MAP(NCM, 5) )
 
+#define USB_VID   0xCafe
+#define USB_BCD   0x0200
+
 // String Descriptor Index
 enum
 {
@@ -36,12 +39,8 @@ enum
 
 enum
 {
-#if CFG_TUD_ECM_RNDIS
   CONFIG_ID_RNDIS = 0,
   CONFIG_ID_ECM   = 1,
-#else
-  CONFIG_ID_NCM   = 0,
-#endif
   CONFIG_ID_COUNT
 };
 
@@ -69,7 +68,7 @@ tusb_desc_device_t const desc_device =
     .iProduct           = STRID_PRODUCT,
     .iSerialNumber      = STRID_SERIAL,
 
-    .bNumConfigurations = CONFIG_ID_COUNT // multiple configurations
+    .bNumConfigurations = 1 // multiple configurations
 };
 
 // Invoked when received GET DEVICE DESCRIPTOR
@@ -82,41 +81,34 @@ uint8_t const * tud_descriptor_device_cb(void)
 //--------------------------------------------------------------------+
 // Configuration Descriptor
 //--------------------------------------------------------------------+
-#define CONFIG_TOTAL_LEN		 (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
-#define MAIN_CONFIG_TOTAL_LEN    (CONFIG_TOTAL_LEN + TUD_RNDIS_DESC_LEN)
-#define ALT_CONFIG_TOTAL_LEN     (CONFIG_TOTAL_LEN + TUD_CDC_ECM_DESC_LEN)
-#define NCM_CONFIG_TOTAL_LEN     (CONFIG_TOTAL_LEN + TUD_CDC_NCM_DESC_LEN)
-
-#define EPNUM_CDC_NOTIF   0x81
-#define EPNUM_CDC_OUT     0x02
-#define EPNUM_CDC_IN      0x82
-
-#define EPNUM_MSC_OUT     0x03
-#define EPNUM_MSC_IN      0x83
-
-#define EPNUM_NET_NOTIF   0x84
-#define EPNUM_NET_OUT     0x05
-#define EPNUM_NET_IN      0x85
+#define MAIN_CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_RNDIS_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
+#define ALT_CONFIG_TOTAL_LEN     (TUD_CONFIG_DESC_LEN + TUD_CDC_ECM_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
 
 
-#if CFG_TUD_ECM_RNDIS
+#define EPNUM_NET_NOTIF   0x81
+#define EPNUM_NET_OUT     0x02
+#define EPNUM_NET_IN      0x82
+
+#define EPNUM_CDC_NOTIF   0x83
+#define EPNUM_CDC_OUT     0x04
+#define EPNUM_CDC_IN      0x84
+
+#define EPNUM_MSC_OUT     0x05
+#define EPNUM_MSC_IN      0x85
 
 static uint8_t const rndis_configuration[] =
 {
-  // Config number (index+1), interface count, string index, total length, attribute, power in mA
+  // Config number (index+1), interface count, string index, total length, attribute, current in mA
   TUD_CONFIG_DESCRIPTOR(CONFIG_ID_RNDIS+1, ITF_NUM_TOTAL, 0, MAIN_CONFIG_TOTAL_LEN, 0, 100),
 
   // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-    TUD_RNDIS_DESCRIPTOR(ITF_NUM_NET, STRID_INTERFACE, EPNUM_NET_NOTIF, 8, EPNUM_NET_OUT, EPNUM_NET_IN, CFG_TUD_NET_ENDPOINT_SIZE),
+  TUD_RNDIS_DESCRIPTOR(ITF_NUM_NET, STRID_INTERFACE, EPNUM_NET_NOTIF, 8, EPNUM_NET_OUT, EPNUM_NET_IN, CFG_TUD_NET_ENDPOINT_SIZE),
 
   // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
   TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, STRID_CDC, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, CFG_TUD_CDC_EP_BUFSIZE),
 
   // Interface number, string index, EP Out & EP In address, EP size
-    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, STRID_MSC, EPNUM_MSC_OUT, EPNUM_MSC_IN, CFG_TUD_MSC_EP_BUFSIZE),
-
-
-
+  TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, STRID_MSC, EPNUM_MSC_OUT, EPNUM_MSC_IN, CFG_TUD_MSC_EP_BUFSIZE),
 
 };
 
@@ -125,35 +117,18 @@ static uint8_t const ecm_configuration[] =
   // Config number (index+1), interface count, string index, total length, attribute, power in mA
   TUD_CONFIG_DESCRIPTOR(CONFIG_ID_ECM+1, ITF_NUM_TOTAL, 0, ALT_CONFIG_TOTAL_LEN, 0, 100),
 
-  // Interface number, description string index, MAC address string index, EP notification address and size, EP data address (out, in), and size, max segment size.
-    TUD_CDC_ECM_DESCRIPTOR(ITF_NUM_NET, STRID_INTERFACE, STRID_MAC, EPNUM_NET_NOTIF, 64, EPNUM_NET_OUT, EPNUM_NET_IN, CFG_TUD_NET_ENDPOINT_SIZE, CFG_TUD_NET_MTU),
+// Interface number, description string index, MAC address string index, EP notification address and size, EP data address (out, in), and size, max segment size.
+  TUD_CDC_ECM_DESCRIPTOR(ITF_NUM_NET, STRID_INTERFACE, STRID_MAC, EPNUM_NET_NOTIF, 64, EPNUM_NET_OUT, EPNUM_NET_IN, CFG_TUD_NET_ENDPOINT_SIZE, CFG_TUD_NET_MTU),
 
   // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
   TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, STRID_CDC, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, CFG_TUD_CDC_EP_BUFSIZE),
 
-  // Interface number, string index, EP Out & EP In address, EP size
-    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, STRID_MSC, EPNUM_MSC_OUT, EPNUM_MSC_IN, CFG_TUD_MSC_EP_BUFSIZE),
-
-
-
-
-};
-
-#else
-
-static uint8_t const ncm_configuration[] =
-{
-  // Config number (index+1), interface count, string index, total length, attribute, power in mA
-  TUD_CONFIG_DESCRIPTOR(CONFIG_ID_NCM+1, ITF_NUM_TOTAL, 0, NCM_CONFIG_TOTAL_LEN, 0, 100),
-
-  // Interface number, description string index, MAC address string index, EP notification address and size, EP data address (out, in), and size, max segment size.
-  TUD_CDC_NCM_DESCRIPTOR(ITF_NUM_NET, STRID_INTERFACE, STRID_MAC, EPNUM_NET_NOTIF, 64, EPNUM_NET_OUT, EPNUM_NET_IN, CFG_TUD_NET_ENDPOINT_SIZE, CFG_TUD_NET_MTU),
 
   // Interface number, string index, EP Out & EP In address, EP size
   TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, STRID_MSC, EPNUM_MSC_OUT, EPNUM_MSC_IN, CFG_TUD_MSC_EP_BUFSIZE),
-};
 
-#endif
+
+};
 
 // Configuration array: RNDIS and CDC-ECM
 // - Windows only works with RNDIS
@@ -161,12 +136,8 @@ static uint8_t const ncm_configuration[] =
 // - Linux will work on both
 static uint8_t const * const configuration_arr[2] =
 {
-#if CFG_TUD_ECM_RNDIS
   [CONFIG_ID_RNDIS] = rndis_configuration,
   [CONFIG_ID_ECM  ] = ecm_configuration
-#else
-  [CONFIG_ID_NCM  ] = ncm_configuration
-#endif
 };
 
 // Invoked when received GET CONFIGURATION DESCRIPTOR
@@ -191,9 +162,8 @@ static char const* string_desc_arr [] =
   [STRID_INTERFACE]    	= "TinyUSB Network Interface",   // Interface Description
 
   // STRID_MAC index is handled separately
-
-  [STRID_MSC]    		= "TinyUSB MSC",   				 // MSC Interface
-  [STRID_CDC]    		= "TinyUSB CDC"   				 // MSC Interface
+  [STRID_CDC]    		= "TinyUSB CDC",   				 // CDC Interface
+  [STRID_MSC]    		= "TinyUSB MSC"   				 // MSC Interface
 };
 
 static uint16_t _desc_str[32];
@@ -201,44 +171,91 @@ static uint16_t _desc_str[32];
 // Invoked when received GET STRING DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid)
+//{
+//  (void) langid;
+//
+//  unsigned int chr_count = 0;
+//
+//  if (STRID_LANGID == index)
+//  {
+//    memcpy(&_desc_str[1], string_desc_arr[STRID_LANGID], 2);
+//    chr_count = 1;
+//  }
+//  else if (STRID_MAC == index)
+//  {
+//    // Convert MAC address into UTF-16
+//
+//    for (unsigned i=0; i<sizeof(tud_network_mac_address); i++)
+//    {
+//      _desc_str[1+chr_count++] = "0123456789ABCDEF"[(tud_network_mac_address[i] >> 4) & 0xf];
+//      _desc_str[1+chr_count++] = "0123456789ABCDEF"[(tud_network_mac_address[i] >> 0) & 0xf];
+//    }
+//  }
+//  else
+//  {
+//    // Note: the 0xEE index string is a Microsoft OS 1.0 Descriptors.
+//    // https://docs.microsoft.com/en-us/windows-hardware/drivers/usbcon/microsoft-defined-usb-descriptors
+//
+//    if ( !(index < sizeof(string_desc_arr)/sizeof(string_desc_arr[0])) ) return NULL;
+//
+//    const char* str = string_desc_arr[index];
+//
+//    // Cap at max char
+//    chr_count = (uint8_t) strlen(str);
+//    if ( chr_count > (TU_ARRAY_SIZE(_desc_str) - 1)) chr_count = TU_ARRAY_SIZE(_desc_str) - 1;
+//
+//    // Convert ASCII string into UTF-16
+//    for (unsigned int i=0; i<chr_count; i++)
+//    {
+//      _desc_str[1+i] = str[i];
+//    }
+//  }
+//
+//  // first byte is length (including header), second byte is string type
+//  _desc_str[0] = (uint16_t) ((TUSB_DESC_STRING << 8 ) | (2*chr_count + 2));
+//
+//  return _desc_str;
+//}
+
 {
   (void) langid;
-
   unsigned int chr_count = 0;
 
-  if (STRID_LANGID == index)
-  {
-    memcpy(&_desc_str[1], string_desc_arr[STRID_LANGID], 2);
-    chr_count = 1;
-  }
-  else if (STRID_MAC == index)
-  {
-    // Convert MAC address into UTF-16
+  switch ( index ) {
+    case STRID_LANGID:
+      memcpy(&_desc_str[1], string_desc_arr[0], 2);
+      chr_count = 1;
+      break;
 
-    for (unsigned i=0; i<sizeof(tud_network_mac_address); i++)
-    {
-      _desc_str[1+chr_count++] = "0123456789ABCDEF"[(tud_network_mac_address[i] >> 4) & 0xf];
-      _desc_str[1+chr_count++] = "0123456789ABCDEF"[(tud_network_mac_address[i] >> 0) & 0xf];
-    }
-  }
-  else
-  {
-    // Note: the 0xEE index string is a Microsoft OS 1.0 Descriptors.
-    // https://docs.microsoft.com/en-us/windows-hardware/drivers/usbcon/microsoft-defined-usb-descriptors
+    case STRID_SERIAL:
+      break;
 
-    if ( !(index < sizeof(string_desc_arr)/sizeof(string_desc_arr[0])) ) return NULL;
+    case STRID_MAC:
+      // Convert MAC address into UTF-16
+      for (unsigned i=0; i<sizeof(tud_network_mac_address); i++) {
+        _desc_str[1+chr_count++] = "0123456789ABCDEF"[(tud_network_mac_address[i] >> 4) & 0xf];
+        _desc_str[1+chr_count++] = "0123456789ABCDEF"[(tud_network_mac_address[i] >> 0) & 0xf];
+      }
+      break;
 
-    const char* str = string_desc_arr[index];
+    default:
+      // Note: the 0xEE index string is a Microsoft OS 1.0 Descriptors.
+      // https://docs.microsoft.com/en-us/windows-hardware/drivers/usbcon/microsoft-defined-usb-descriptors
 
-    // Cap at max char
-    chr_count = (uint8_t) strlen(str);
-    if ( chr_count > (TU_ARRAY_SIZE(_desc_str) - 1)) chr_count = TU_ARRAY_SIZE(_desc_str) - 1;
+      if ( !(index < sizeof(string_desc_arr) / sizeof(string_desc_arr[0])) ) return NULL;
 
-    // Convert ASCII string into UTF-16
-    for (unsigned int i=0; i<chr_count; i++)
-    {
-      _desc_str[1+i] = str[i];
-    }
+      const char *str = string_desc_arr[index];
+
+      // Cap at max char
+      chr_count = strlen(str);
+      size_t const max_count = sizeof(_desc_str) / sizeof(_desc_str[0]) - 1; // -1 for string type
+      if ( chr_count > max_count ) chr_count = max_count;
+
+      // Convert ASCII string into UTF-16
+      for ( size_t i = 0; i < chr_count; i++ ) {
+        _desc_str[1 + i] = str[i];
+      }
+      break;
   }
 
   // first byte is length (including header), second byte is string type
