@@ -235,7 +235,7 @@ static inline int mg_mkdir(const char *path, mode_t mode) {
 
 #define MG_PATH_MAX 100
 #define MG_ENABLE_SOCKET 0
-#define MG_ENABLE_DIRLIST 0
+#define MG_ENABLE_DIRLIST 1
 
 #endif
 
@@ -2925,6 +2925,7 @@ struct mg_tcpip_driver_tm4c_data {
   //    0x4-0xF Reserved
   int mdc_cr;  // Valid values: -1, 0, 1, 2, 3
 };
+
 
 #ifdef __cplusplus
 }

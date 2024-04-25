@@ -25,6 +25,7 @@
 
 #include <ctype.h>
 #include "mongoose.h"
+#include "mongoose_custom.h"
 #include "msc_disk.h"
 
 /* USER CODE END Includes */
@@ -181,17 +182,33 @@ static bool usb_up(struct mg_tcpip_if *ifp) {
 
 // website handler
 static void fn(struct mg_connection *c, int ev, void *ev_data) {
-  if (ev == MG_EV_HTTP_MSG) {
-    struct mg_http_message *hm = (struct mg_http_message *) ev_data;
-    if (mg_http_match_uri(hm, "/api/debug")) {
-      int level = mg_json_get_long(hm->body, "$.level", MG_LL_DEBUG);
-      mg_log_set(level);
-      mg_http_reply(c, 200, "", "Debug level set to %d\n", level);
-    } else {
-      mg_http_reply(c, 200, "", "hi\n");
-    }
+
+
+	switch(ev){
+	case MG_EV_HTTP_MSG:
+		struct mg_http_message *hm = (struct mg_http_message *) ev_data;
+		if (mg_http_match_uri(hm, "/api/debug")){
+			int level = mg_json_get_long(hm->body, "$.level", MG_LL_DEBUG);
+			mg_log_set(level);
+			mg_http_reply(c, 200, "", "Debug level set to %d\n", level);
+		}else{
+			struct mg_http_serve_opts opts = {
+			        .root_dir = "/www",
+			        .fs = &mg_fs_fat
+			      };
+			    mg_http_serve_dir(c, ev_data, &opts);
+		}
+		break;
+
   }
 }
+
+
+void log_fn(char ch, void *param) {
+	tud_cdc_write_char(ch);
+	tud_cdc_write_flush();
+}
+
 
 /* USER CODE END 0 */
 
@@ -269,6 +286,7 @@ __HAL_RCC_HSEM_CLK_ENABLE();
   struct mg_mgr mgr;        // Initialise
   mg_mgr_init(&mgr);        // Mongoose event manager
   mg_log_set(MG_LL_DEBUG);  // Set log level
+  mg_log_set_fn(log_fn, NULL);
 
   MG_INFO(("Init TCP/IP stack ..."));
   struct mg_tcpip_driver driver = {.tx = usb_tx, .up = usb_up};
@@ -283,7 +301,7 @@ __HAL_RCC_HSEM_CLK_ENABLE();
 
 
   mg_timer_add(&mgr, 500, MG_TIMER_REPEAT, blink_cb, &mgr);
-  mg_http_listen(&mgr, "tcp://0.0.0.0:80", fn, &mgr);
+  mg_http_listen(&mgr, "http://0.0.0.0:80", fn, &mgr);
 
   MG_INFO(("Init USB ..."));
   init_tud_network_mac_address();

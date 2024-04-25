@@ -2,6 +2,7 @@
 #include "tusb.h"
 
 #include "ff.h"
+#include "fatfs.h"
 
 #include "ff_gen_drv.h"
 #include "sd_diskio.h"
@@ -11,6 +12,13 @@ void fatfs_init(void) {
 	if(SD_Driver.disk_initialize(0) != 0){
 		while(1){
 			HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+			HAL_Delay(50);
+		}
+	}
+
+	if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != 0){
+		while(1){
+			HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
 			HAL_Delay(50);
 		}
 	}
