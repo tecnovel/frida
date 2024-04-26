@@ -217,6 +217,7 @@ void log_fn(char ch, void *param) {
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -302,10 +303,9 @@ __HAL_RCC_HSEM_CLK_ENABLE();
   MG_INFO(("Init USB ..."));
   init_tud_network_mac_address();
 
-
-
   fatfs_init();
   tud_init(BOARD_TUD_RHPORT);
+
 
   MG_INFO(("Init done, starting main loop ..."));
 
