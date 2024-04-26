@@ -1,27 +1,46 @@
 
 #include "tusb.h"
+#include "main.h"
 
 #include "ff.h"
-#include "fatfs.h"
+#include "diskio.h"
 
-#include "ff_gen_drv.h"
-#include "sd_diskio.h"
+FATFS fatfs;
+
 
 void fatfs_init(void) {
 
-	if(SD_Driver.disk_initialize(0) != 0){
+
+	if(disk_initialize(0) != 0){
 		while(1){
 			HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
 			HAL_Delay(50);
 		}
 	}
 
-	if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != 0){
+
+	if(f_mount(&fatfs, (TCHAR const*)"0:/\0", 0) != 0){
 		while(1){
 			HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
 			HAL_Delay(50);
 		}
 	}
+
+//	FIL SDFile;
+//
+//	FRESULT res = f_open(&SDFile, "testSD.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
+//	f_write(&SDFile, "Hoiiiiii", 8, NULL);
+//	if (res != FR_OK) {
+//		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+//		HAL_Delay(500);
+//		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+//		HAL_Delay(500);
+//		return;
+//	}
+//
+//	// Close the file, as it was just a test
+//	f_close(&SDFile);
+
 }
 
 #if CFG_TUD_MSC
@@ -71,9 +90,9 @@ void tud_msc_capacity_cb(uint8_t lun, uint32_t* block_count, uint16_t* block_siz
 
 	DRESULT res;
 
-	res = SD_Driver.disk_ioctl(lun, GET_SECTOR_COUNT, block_count);
+	res = disk_ioctl(lun, GET_SECTOR_COUNT, block_count);
 	if(res != RES_OK) return;
-    res = SD_Driver.disk_ioctl(lun, GET_SECTOR_SIZE, block_size);
+    res = disk_ioctl(lun, GET_SECTOR_SIZE, block_size);
     if(res != RES_OK) return;
 
     return;
@@ -109,11 +128,10 @@ int32_t tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void* buff
 
     DWORD sector = lba; // Logical Block Addressing
     uint16_t blocksize;
-    SD_Driver.disk_ioctl(lun, GET_SECTOR_SIZE, &blocksize);
+    disk_ioctl(lun, GET_SECTOR_SIZE, &blocksize);
     //UINT byteRead;
 
-    //DRESULT res = disk_read(0, buffer, sector, bufsize / DISK_BLOCK_SIZE);
-    DRESULT res = SD_Driver.disk_read(lun, buffer, sector, bufsize / blocksize);
+    DRESULT res = disk_read(lun, buffer, sector, bufsize / blocksize);
     if (res != RES_OK) {
         return -1;
     }
@@ -139,11 +157,11 @@ int32_t tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t* 
 
     DWORD sector = lba; // Logical Block Addressing
     uint16_t blocksize;
-    SD_Driver.disk_ioctl(lun, GET_SECTOR_SIZE, &blocksize);
+    disk_ioctl(lun, GET_SECTOR_SIZE, &blocksize);
     //UINT byteWritten;
 
     //DRESULT res = disk_write(0, buffer, sector, bufsize / DISK_BLOCK_SIZE);
-    DRESULT res = SD_Driver.disk_write(lun, buffer, sector, bufsize / blocksize);
+    DRESULT res = disk_write(lun, buffer, sector, bufsize / blocksize);
     if (res != RES_OK) {
         return -1;
     }
