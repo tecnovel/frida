@@ -65,7 +65,7 @@ TIM_HandleTypeDef htim13;
 
 UART_HandleTypeDef huart8;
 
-   uint8_t cec_receive_buffer[16];
+uint8_t cec_receive_buffer[16];
 /* USER CODE BEGIN PV */
 
 
@@ -153,7 +153,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  //mg_mgr_poll(&mgr, 0);
 
     /* USER CODE END WHILE */
 
@@ -857,12 +856,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-//--------------------------------------------------------------------+
-// Device callbacks
-//--------------------------------------------------------------------+
-
-// Invoked when device is mounted
 
 
 /* USER CODE END 4 */
