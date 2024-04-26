@@ -19,7 +19,5 @@
 #define MG_ENABLE_POSIX_FS 0
 #define MG_IO_SIZE 512
 #define MG_ENABLE_LINES 1
-#define MG_ENABLE_DNS_SERVER 1
-#define MG_ENABLE_IPV6 1
 
 #endif /* INC_MONGOOSE_CUSTOM_H_ */

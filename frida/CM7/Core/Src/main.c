@@ -28,6 +28,10 @@
 #include "mongoose_custom.h"
 #include "msc_disk.h"
 
+#include "dhserver.h"
+#include "dnserver.h"
+#include "ip_settings.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,15 +51,6 @@ enum {
 #ifndef HSEM_ID_0
 #define HSEM_ID_0 (0U) /* HW semaphore 0*/
 #endif
-
-#define UUID ((uint8_t *) UID_BASE)  // Unique 96-bit chip ID. TRM 39.1
-
-// Helper macro for MAC generation
-#define GENERATE_LOCALLY_ADMINISTERED_MAC()                        \
-  {                                                                \
-    2, UUID[0] ^ UUID[1], UUID[2] ^ UUID[3], UUID[4] ^ UUID[5],    \
-        UUID[6] ^ UUID[7] ^ UUID[8], UUID[9] ^ UUID[10] ^ UUID[11] \
-  }
 
 /* USER CODE END PD */
 
@@ -83,6 +78,34 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 /* ideally speaking, this should be generated from the hardware's unique ID (if available) */
 /* it is suggested that the first byte is 0x02 to indicate a link-local address */
 uint8_t tud_network_mac_address[6];
+
+static const char *s_listen_on = "http://0.0.0.0:80";
+
+static dhcp_entry_t entries[] =
+{
+    /* mac ip address                          lease time */
+    { {0}, IPADDR4_INIT_BYTES(10, 0, 0 , 100), 24 * 60 * 60 },
+    { {0}, IPADDR4_INIT_BYTES(10, 0, 0 , 101), 24 * 60 * 60 },
+    { {0}, IPADDR4_INIT_BYTES(10, 0, 0 , 102), 24 * 60 * 60 },
+    { {0}, IPADDR4_INIT_BYTES(10, 0, 0 , 103), 24 * 60 * 60 },
+
+    /* mac ip address                          lease time */
+  //  { {0}, IPADDR4_INIT_BYTES(169,254,254, 100), 24 * 60 * 60 },
+  //  { {0}, IPADDR4_INIT_BYTES(169,254,254, 101), 24 * 60 * 60 },
+  //  { {0}, IPADDR4_INIT_BYTES(169,254,254, 102), 24 * 60 * 60 },
+  //  { {0}, IPADDR4_INIT_BYTES(169,254,254, 103), 24 * 60 * 60 },
+};
+
+const dhcp_config_t dhcp_config =
+{
+    .router    = IP_ADDRESS,              		 			/* router address (if any) */
+    .port      = 67,                       					/* listen port */
+    .dns       = IP_ADDRESS,               					/* dns server (if any) */
+    .domain    = "psi",               						/* dns suffix */
+    .num_entry = sizeof(entries) / sizeof(dhcp_entry_t),   	/* num entry */
+    .entries   = entries                   					/* entries */
+};
+
 
 
 /* USER CODE END PV */
@@ -134,8 +157,7 @@ void mg_random(void *buf, size_t len) {  // Use on-board RNG
 
 // init the mac address of tiny usb
 void init_tud_network_mac_address(void) {
-    // Assuming GENERATE_LOCALLY_ADMINISTERED_MAC is a macro that expands to an initializer based on UUID
-    uint8_t temp_mac_address[6] = GENERATE_LOCALLY_ADMINISTERED_MAC();
+    uint8_t temp_mac_address[6] = MAC_ADDRESS;
     for (int i = 0; i < 6; i++) {
         tud_network_mac_address[i] = temp_mac_address[i];
     }
@@ -193,10 +215,10 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
 			mg_http_reply(c, 200, "", "Debug level set to %d\n", level);
 		}else{
 			struct mg_http_serve_opts opts = {
-			        .root_dir = "/www",
-			        .fs = &mg_fs_fat
-			      };
-			    mg_http_serve_dir(c, ev_data, &opts);
+				.root_dir = "/www",
+				.fs = &mg_fs_fat
+			};
+			mg_http_serve_dir(c, ev_data, &opts);
 		}
 		break;
 
@@ -209,6 +231,19 @@ void log_fn(char ch, void *param) {
 	tud_cdc_write_flush();
 }
 
+bool dns_query_proc(const char *name, uint32_t *addr)
+{
+	MG_DEBUG(("dns_query_proc: >>>%s<<<\n", name));
+    if (strcmp(name, "frida") == 0 || strcmp(name, "frida.local") == 0 || strcmp(name, "frida.psi") == 0)
+    {
+        *addr = IP_ADDRESS;
+        MG_DEBUG(("dns_query_proc: IP_ADDRESS %08lx\n", IP_ADDRESS));
+
+        return true;
+    }
+    return false;
+}
+
 
 /* USER CODE END 0 */
 
@@ -218,6 +253,7 @@ void log_fn(char ch, void *param) {
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -281,8 +317,6 @@ __HAL_RCC_HSEM_CLK_ENABLE();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
-
-
   struct mg_mgr mgr;        // Initialise
   mg_mgr_init(&mgr);        // Mongoose event manager
   mg_log_set(MG_LL_DEBUG);  // Set log level
@@ -290,18 +324,23 @@ __HAL_RCC_HSEM_CLK_ENABLE();
 
   MG_INFO(("Init TCP/IP stack ..."));
   struct mg_tcpip_driver driver = {.tx = usb_tx, .up = usb_up};
-  struct mg_tcpip_if mif = {.mac = GENERATE_LOCALLY_ADMINISTERED_MAC(),
-                            .ip = mg_htonl(MG_U32(192, 168, 3, 1)),
-                            .mask = mg_htonl(MG_U32(255, 255, 255, 0)),
-                            .enable_dhcp_server = true,
+  struct mg_tcpip_if mif = {.mac = MAC_ADDRESS,
+                            .ip = IP_ADDRESS,
+                            .mask = IP_NETMASK,
+							.gw = IP_GATEWAY,
+//                            .enable_dhcp_server = true,
                             .driver = &driver,
                             .recv_queue.size = 4096};
   s_ifp = &mif;
   mg_tcpip_init(&mgr, &mif);
 
+  dhserv_init(&mgr, &dhcp_config);
+
+  dnserv_init(&mgr, dns_query_proc);
+
 
   mg_timer_add(&mgr, 500, MG_TIMER_REPEAT, blink_cb, &mgr);
-  mg_http_listen(&mgr, "http://0.0.0.0:80", fn, &mgr);
+  mg_http_listen(&mgr, s_listen_on, fn, &mgr);
 
   MG_INFO(("Init USB ..."));
   init_tud_network_mac_address();
