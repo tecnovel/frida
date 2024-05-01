@@ -142,7 +142,7 @@ void init_tud_network_mac_address(void) {
 
 // callback when data is coming from usb
 bool tud_network_recv_cb(const uint8_t *buf, uint16_t len) {
-  mg_tcpip_qwrite((void *) buf, len, s_ifp);
+ // mg_tcpip_qwrite((void *) buf, len, s_ifp);////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // MG_INFO(("RECV %hu", len));
   // mg_hexdump(buf, len);
   tud_network_recv_renew();
@@ -191,11 +191,11 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
 			mg_log_set(level);
 			mg_http_reply(c, 200, "", "Debug level set to %d\n", level);
 		}else{
-			struct mg_http_serve_opts opts = {
-			        .root_dir = "/www",
-			        .fs = &mg_fs_fat
-			      };
-			    mg_http_serve_dir(c, ev_data, &opts);
+//			struct mg_http_serve_opts opts = {
+//			        .root_dir = "/www",
+//			        .fs = &mg_fs_fat
+//			      };
+//			    mg_http_serve_dir(c, ev_data, &opts);
 		}
 		break;
 
@@ -316,7 +316,7 @@ __HAL_RCC_HSEM_CLK_ENABLE();
   while (1)
   {
 
-	  mg_mgr_poll(&mgr, 0);
+//	  mg_mgr_poll(&mgr, 0);
 	  tud_task();
 	  led_blinking_task();
 	  cdc_task();

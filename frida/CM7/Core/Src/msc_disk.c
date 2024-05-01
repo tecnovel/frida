@@ -26,20 +26,20 @@ void fatfs_init(void) {
 		}
 	}
 
-	FIL SDFile;
-
-	FRESULT res = f_open(&SDFile, "testSD.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
-	f_write(&SDFile, "Hoiiiiii", 8, NULL);
-	if (res != FR_OK) {
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-		HAL_Delay(500);
-		return;
-	}
-
-	// Close the file, as it was just a test
-	f_close(&SDFile);
+//	FIL SDFile;
+//
+//	FRESULT res = f_open(&SDFile, "testSD.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
+//	f_write(&SDFile, "Hoiiiiii", 8, NULL);
+//	if (res != FR_OK) {
+//		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+//		HAL_Delay(500);
+//		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+//		HAL_Delay(500);
+//		return;
+//	}
+//
+//	// Close the file, as it was just a test
+//	f_close(&SDFile);
 
 }
 
