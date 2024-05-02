@@ -209,6 +209,13 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
 	switch(ev){
 	case MG_EV_HTTP_MSG:
 		struct mg_http_message *hm = (struct mg_http_message *) ev_data;
+		if (mg_http_match_uri(hm, "/ws"))
+		{
+			// Upgrade to websocket. From now on, a connection is a full-duplex
+			// Websocket connection, which will receive MG_EV_WS_MSG events.
+			mg_ws_upgrade(c, hm, NULL);
+		}
+		else
 		if (mg_http_match_uri(hm, "/api/debug")){
 			int level = mg_json_get_long(hm->body, "$.level", MG_LL_DEBUG);
 			mg_log_set(level);
@@ -221,7 +228,13 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
 			mg_http_serve_dir(c, ev_data, &opts);
 		}
 		break;
+	case MG_EV_WS_MSG:
+		struct mg_ws_message *wm = (struct mg_ws_message *) ev_data;
+		//mg_ws_send(c, wm->data.ptr, wm->data.len, WEBSOCKET_OP_TEXT);
 
+		if(strcmp(wm->data.ptr, "version") == 0){
+			mg_ws_printf(c, WEBSOCKET_OP_TEXT, "{%m:%m}", MG_ESC("version"), MG_ESC("Version 1"));
+		}
   }
 }
 
@@ -233,11 +246,12 @@ void log_fn(char ch, void *param) {
 
 bool dns_query_proc(const char *name, uint32_t *addr)
 {
-	MG_DEBUG(("dns_query_proc: >>>%s<<<\n", name));
+	//MG_DEBUG(("dns_query_proc: >>>%s<<<\n", name));
     if (strcmp(name, "frida") == 0 || strcmp(name, "frida.local") == 0 || strcmp(name, "frida.psi") == 0)
     {
         *addr = IP_ADDRESS;
-        MG_DEBUG(("dns_query_proc: IP_ADDRESS %08lx\n", IP_ADDRESS));
+        //MG_DEBUG(("dns_query_proc: IP_ADDRESS %08lx\n", IP_ADDRESS));
+        MG_DEBUG(("dns_query_proc: >>>%s<<<\n", name));
 
         return true;
     }
