@@ -1,0 +1,8 @@
+Aktueller Stand:
+Das Auslesen der SD-Karte via SPI funktioniert. Windows liest nach Verbindungsaufbau den GESAMMTEN Inhalt der SD-Karte aus. Dies dauert sehr lange, weshalb es zu Komplikationen mit dem Webserver kommt.
+Die Treiber für die SD-Karte (zwei getestet) lesen alle Bytes einzeln aus. Der Grund dafür war nicht direkt ersichtlich, hätte möglicherweise aber Potenzial zur Optimierung?
+
+
+Mögliche Lösungen:
+- Dateien nicht per USB zugänglich machen. Wenn die Dateien lediglich dem Webserver verfügbar gemacht werden, könnte die Lesegeschwindigkeit ausreichen.
+- Man arbeitet weiterhin mit der SDMMC-Schnittstelle (STM32L4/F7/H7/U5)

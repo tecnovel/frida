@@ -10,6 +10,7 @@
 #include "ff.h"			/* Obtains integer types */
 #include "diskio.h"		/* Declarations of disk functions */
 #include "drv/sd_spi.h"
+#include "drv/user_diskio_spi.h"
 
 
 /*-----------------------------------------------------------------------*/
@@ -20,6 +21,7 @@ DSTATUS disk_status (
 	BYTE pdrv		/* Physical drive nmuber to identify the drive */
 )
 {
+	//return USER_SPI_status(pdrv);
 	return SD_disk_status(pdrv);
 }
 
@@ -33,6 +35,7 @@ DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
+	//return USER_SPI_initialize(pdrv);
 	return SD_disk_initialize(pdrv);
 }
 
@@ -49,6 +52,7 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
+	//return USER_SPI_read(pdrv, buff, (DWORD) sector, count);
 	return SD_disk_read(pdrv, buff, (DWORD) sector, count);
 }
 
@@ -67,6 +71,7 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
+	//return USER_SPI_write(pdrv, buff, (DWORD) sector, count);
 	return SD_disk_write(pdrv, buff, (DWORD) sector, count);
 
 }
@@ -84,6 +89,7 @@ DRESULT disk_ioctl (
 	void *buff		/* Buffer to send/receive control data */
 )
 {
+	//return USER_SPI_ioctl(pdrv, cmd, buff);
 	return SD_disk_ioctl(pdrv, cmd, buff);
 }
 
