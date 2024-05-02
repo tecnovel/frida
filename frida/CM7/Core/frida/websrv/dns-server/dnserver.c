@@ -28,7 +28,7 @@
  */
 
 #include "dnserver.h"
-#include "ip_settings.h"
+#include "../ip_settings.h"
 
 #define DNS_MAX_HOST_NAME_LEN 128
 

@@ -23,7 +23,7 @@
  */
 
 #include "dhserver.h"
-#include "ip_settings.h"
+#include "../ip_settings.h"
 
 /* DHCP message type */
 #define DHCP_DISCOVER       1

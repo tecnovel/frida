@@ -9,7 +9,7 @@
 #define FRIDA_WEBSRV_MONGOOSE_COM_H_
 
 
-#include "mongoose.h"
+#include "mongoose/mongoose.h"
 
 bool tud_network_recv_cb(const uint8_t *buf, uint16_t len);
 void tud_network_init_cb(void);

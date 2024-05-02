@@ -5,9 +5,7 @@
  *      Author: kaestli_a
  */
 
-#include "main.h"
-#include "ip_settings.h"
-#include "mongoose_com.h"
+#include "frida.h"
 
 // callback when data is coming from usb
 bool tud_network_recv_cb(const uint8_t *buf, uint16_t len) {

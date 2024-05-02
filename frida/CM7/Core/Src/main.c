@@ -24,15 +24,6 @@
 /* USER CODE BEGIN Includes */
 
 #include <ctype.h>
-#include "mongoose.h"
-#include "mongoose_custom.h"
-#include "msc_disk.h"
-
-#include "dhserver.h"
-#include "dnserver.h"
-#include "ip_settings.h"
-#include "mongoose_com.h"
-#include "eventHandler.h"
 #include "frida.h"
 
 /* USER CODE END Includes */
