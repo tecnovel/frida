@@ -35,11 +35,12 @@ const dhcp_config_t dhcp_config =
 
 bool dns_query_proc(const char *name, uint32_t *addr)
 {
-	MG_DEBUG(("dns_query_proc: >>>%s<<<\n", name));
+	//MG_DEBUG(("dns_query_proc: >>>%s<<<\n", name));
     if (strcmp(name, "frida") == 0 || strcmp(name, "frida.local") == 0 || strcmp(name, "frida.psi") == 0)
     {
         *addr = IP_ADDRESS;
-        MG_DEBUG(("dns_query_proc: IP_ADDRESS %08lx\n", IP_ADDRESS));
+        //MG_DEBUG(("dns_query_proc: >>>%s<<<\n", name));
+        //MG_DEBUG(("dns_query_proc: IP_ADDRESS %08lx\n", IP_ADDRESS));
 
         return true;
     }
