@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "frida.h"
 #include "stm32h7xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
