@@ -24,13 +24,7 @@
 /* USER CODE BEGIN Includes */
 
 #include <ctype.h>
-#include "mongoose.h"
-#include "mongoose_custom.h"
-#include "msc_disk.h"
-
-#include "dhserver.h"
-#include "dnserver.h"
-#include "ip_settings.h"
+#include "frida.h"
 
 /* USER CODE END Includes */
 
@@ -73,41 +67,6 @@ PCD_HandleTypeDef hpcd_USB_OTG_HS;
 
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
-
-/* this is used by this code, ./class/net/net_driver.c, and usb_descriptors.c */
-/* ideally speaking, this should be generated from the hardware's unique ID (if available) */
-/* it is suggested that the first byte is 0x02 to indicate a link-local address */
-uint8_t tud_network_mac_address[6];
-
-static const char *s_listen_on = "http://0.0.0.0:80";
-
-static dhcp_entry_t entries[] =
-{
-    /* mac ip address                          lease time */
-    { {0}, IPADDR4_INIT_BYTES(10, 0, 0 , 100), 24 * 60 * 60 },
-    { {0}, IPADDR4_INIT_BYTES(10, 0, 0 , 101), 24 * 60 * 60 },
-    { {0}, IPADDR4_INIT_BYTES(10, 0, 0 , 102), 24 * 60 * 60 },
-    { {0}, IPADDR4_INIT_BYTES(10, 0, 0 , 103), 24 * 60 * 60 },
-
-    /* mac ip address                          lease time */
-  //  { {0}, IPADDR4_INIT_BYTES(169,254,254, 100), 24 * 60 * 60 },
-  //  { {0}, IPADDR4_INIT_BYTES(169,254,254, 101), 24 * 60 * 60 },
-  //  { {0}, IPADDR4_INIT_BYTES(169,254,254, 102), 24 * 60 * 60 },
-  //  { {0}, IPADDR4_INIT_BYTES(169,254,254, 103), 24 * 60 * 60 },
-};
-
-const dhcp_config_t dhcp_config =
-{
-    .router    = IP_ADDRESS,              		 			/* router address (if any) */
-    .port      = 67,                       					/* listen port */
-    .dns       = IP_ADDRESS,               					/* dns server (if any) */
-    .domain    = "psi",               						/* dns suffix */
-    .num_entry = sizeof(entries) / sizeof(dhcp_entry_t),   	/* num entry */
-    .entries   = entries                   					/* entries */
-};
-
-
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -128,120 +87,12 @@ void led_blinking_task(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-static struct mg_tcpip_if *s_ifp;
+//struct mg_tcpip_if *s_ifp;
 
 // Network blink
 static void blink_cb(void *arg) {  // Blink periodically
 	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
   (void) arg;
-}
-
-
-/* Mongoose user functions */
-
-uint64_t mg_millis(void) {  // Let Mongoose use our uptime function
-  return HAL_GetTick();     // Return number of milliseconds since boot
-}
-
-
-// Hardware random generator
-void mg_random(void *buf, size_t len) {  // Use on-board RNG
-  for (size_t n = 0; n < len; n += sizeof(uint32_t)) {
-    uint32_t r;
-    HAL_RNG_GenerateRandomNumber(&hrng, &r);
-    memcpy((char *) buf + n, &r, n + sizeof(r) > len ? len - n : sizeof(r));
-  }
-}
-
-/* Tiny USB Callbacks & Mongoose Communication functions */
-
-// init the mac address of tiny usb
-void init_tud_network_mac_address(void) {
-    uint8_t temp_mac_address[6] = MAC_ADDRESS;
-    for (int i = 0; i < 6; i++) {
-        tud_network_mac_address[i] = temp_mac_address[i];
-    }
-}
-
-// callback when data is coming from usb
-bool tud_network_recv_cb(const uint8_t *buf, uint16_t len) {
-  mg_tcpip_qwrite((void *) buf, len, s_ifp);
-  // MG_INFO(("RECV %hu", len));
-  // mg_hexdump(buf, len);
-  tud_network_recv_renew();
-  return true;
-}
-
-
-// callback when network is init
-void tud_network_init_cb(void) {
-}
-
-
-// sends via usb network data (tiny USB)
-uint16_t tud_network_xmit_cb(uint8_t *dst, void *ref, uint16_t arg) {
-  // MG_INFO(("SEND %hu", arg));
-  memcpy(dst, ref, arg);
-  return arg;
-}
-
-// send via usb network (mongoose)
-static size_t usb_tx(const void *buf, size_t len, struct mg_tcpip_if *ifp) {
-  if (!tud_ready()) return 0;
-  while (!tud_network_can_xmit(len)) tud_task();
-  tud_network_xmit((void *) buf, len);
-  (void) ifp;
-  return len;
-}
-
-
-// mongoose aks if usb is working
-static bool usb_up(struct mg_tcpip_if *ifp) {
-  (void) ifp;
-  return tud_inited() && tud_ready() && tud_connected();
-}
-
-
-// website handler
-static void fn(struct mg_connection *c, int ev, void *ev_data) {
-
-
-	switch(ev){
-	case MG_EV_HTTP_MSG:
-		struct mg_http_message *hm = (struct mg_http_message *) ev_data;
-		if (mg_http_match_uri(hm, "/api/debug")){
-			int level = mg_json_get_long(hm->body, "$.level", MG_LL_DEBUG);
-			mg_log_set(level);
-			mg_http_reply(c, 200, "", "Debug level set to %d\n", level);
-		}else{
-			struct mg_http_serve_opts opts = {
-				.root_dir = "/www",
-				.fs = &mg_fs_fat
-			};
-			mg_http_serve_dir(c, ev_data, &opts);
-		}
-		break;
-
-  }
-}
-
-
-void log_fn(char ch, void *param) {
-	tud_cdc_write_char(ch);
-	tud_cdc_write_flush();
-}
-
-bool dns_query_proc(const char *name, uint32_t *addr)
-{
-	MG_DEBUG(("dns_query_proc: >>>%s<<<\n", name));
-    if (strcmp(name, "frida") == 0 || strcmp(name, "frida.local") == 0 || strcmp(name, "frida.psi") == 0)
-    {
-        *addr = IP_ADDRESS;
-        MG_DEBUG(("dns_query_proc: IP_ADDRESS %08lx\n", IP_ADDRESS));
-
-        return true;
-    }
-    return false;
 }
 
 
@@ -317,39 +168,10 @@ __HAL_RCC_HSEM_CLK_ENABLE();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
-  struct mg_mgr mgr;        // Initialise
-  mg_mgr_init(&mgr);        // Mongoose event manager
-  mg_log_set(MG_LL_DEBUG);  // Set log level
-  mg_log_set_fn(log_fn, NULL);
 
-  MG_INFO(("Init TCP/IP stack ..."));
-  struct mg_tcpip_driver driver = {.tx = usb_tx, .up = usb_up};
-  struct mg_tcpip_if mif = {.mac = MAC_ADDRESS,
-                            .ip = IP_ADDRESS,
-                            .mask = IP_NETMASK,
-							.gw = IP_GATEWAY,
-//                            .enable_dhcp_server = true,
-                            .driver = &driver,
-                            .recv_queue.size = 4096};
-  s_ifp = &mif;
-  mg_tcpip_init(&mgr, &mif);
-
-  dhserv_init(&mgr, &dhcp_config);
-
-  dnserv_init(&mgr, dns_query_proc);
-
+  frida_init();
 
   mg_timer_add(&mgr, 500, MG_TIMER_REPEAT, blink_cb, &mgr);
-  mg_http_listen(&mgr, s_listen_on, fn, &mgr);
-
-  MG_INFO(("Init USB ..."));
-  init_tud_network_mac_address();
-
-  fatfs_init();
-  tud_init(BOARD_TUD_RHPORT);
-
-  MG_INFO(("Init done, starting main loop ..."));
-
 
   /* USER CODE END 2 */
 
@@ -357,10 +179,9 @@ __HAL_RCC_HSEM_CLK_ENABLE();
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  mg_mgr_poll(&mgr, 0);
-	  tud_task();
+
+	  frida_loop();
 	  led_blinking_task();
-	  cdc_task();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
