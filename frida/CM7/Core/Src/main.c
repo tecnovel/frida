@@ -220,6 +220,12 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
 			int level = mg_json_get_long(hm->body, "$.level", MG_LL_DEBUG);
 			mg_log_set(level);
 			mg_http_reply(c, 200, "", "Debug level set to %d\n", level);
+		} else if (mg_match(hm->uri, mg_str("/api"), NULL)) {
+			double num1 = 0.0, num2 = 0.0;
+			mg_json_get_num(hm->body, "$.name", &num1);  // Extract first number
+			mg_json_get_num(hm->body, "$.email", &num2);  // Extract second number
+			mg_http_reply(c, 200, "Content-Type: application/json\r\n",
+					"{%m:%g}\n", MG_ESC("result"), num1 + num2);
 		}else{
 			struct mg_http_serve_opts opts = {
 				.root_dir = "/www",
