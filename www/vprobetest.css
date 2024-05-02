@@ -1,0 +1,204 @@
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    margin: 0px;
+    background-color: rgb(224, 224, 224);
+    color: rgb(0, 0, 0);
+}
+
+.top-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.cont {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* for firefox */
+    min-height: 0;
+}
+
+.cont-hidden {
+    display: none;
+}
+
+.cont-flex {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+    /* for firefox */
+    min-height: 0;
+}
+
+.cont-scrollable {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow-y: scroll;
+    overflow-x: auto;
+    /* for firefox */
+    min-height: 0;
+}
+
+/* --- main layout ------------------------------------------- */
+
+header {
+    padding: 0.4em 1em;
+    background-color: rgb(57, 112, 194);
+    color: rgb(250, 250, 211);
+}
+
+footer {
+    display:flex; flex-direction:row; justify-content:space-between;
+    padding: 0.4em 2em;
+    background-color: rgb(57, 112, 194);
+    color: rgb(250, 250, 211);
+}
+
+main {
+    padding: 0.5em;
+    background-color: rgb(218, 242, 250);
+}
+
+h1 {
+    font-size: 200%;
+    margin: 0px;
+    display: inline;
+    margin-right: 40px;
+}
+
+
+/* --- panels --------------------------------------------- */
+
+.panel {
+    margin-bottom: 0.5em;
+    padding: 0 0.5em;
+    background-color:rgb(248, 246, 225);
+    border: solid rgb(199, 197, 181) 1px;
+}
+
+.results {
+    font-family: monospace;
+    /* width: calc(100% - 1em); */
+    border: solid black 1px;
+    background-color: white;
+    margin-top: -1px;
+    padding: 0.3em;
+}
+
+
+/* --- tabs ------------------------------------------------- */
+.tabs {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    border: solid rgb(209, 209, 209) 1px;
+    border-bottom: none;
+    background-color: rgb(230, 230, 230);
+}
+
+.tabs button {
+    background-color: inherit;
+    color: #444;
+    float: left;
+    border: none;
+    border-radius: 0;
+    outline: none;
+    cursor: pointer;
+    padding: 0.2em 1em;
+    /* transition: 0.3s; */
+    font-size: 80%;
+}
+
+.tabs button:hover {
+    background-color: #ddd;
+}
+  
+.tabs button.active {
+    background-color: #ccc;
+    color: black;
+}
+
+/* --- Element --------------------------------------------*/
+
+/* colors */
+.btn-red { background-color: rgb(253, 127, 127); }
+.btn-green { background-color: rgb(81, 238, 81); }
+
+/* Buttons */
+button {
+    font-size: 75%;
+    border: solid black 1px;
+    border-radius: 4px;
+    padding: 1px 4px;
+    /* background-color: rgb(236, 236, 236); */
+}
+
+.btn-result {
+    font-size: 75%;
+    border: solid black 1px;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    padding: 1px 4px;
+}
+.w3 { width: 3em; }
+.w5 { width: 5em; }
+.w7 { width: 7em; }
+.w10 { width: 10em; }
+
+/* text input/output fields */
+.inp {
+    font-size: 75%;
+    text-align: right;
+}
+
+.debug {
+    font-size: 75%;
+    background-color: rgb(252, 194, 156);
+    border: solid 1px rgb(219, 164, 128);
+    text-align: left;
+    padding: 2px 5px;
+    width: 30em;
+    pointer-events: none;
+}
+
+/* labels */
+label {
+    font-size: 95%;
+}
+
+/* I/O field group containers and element */
+.group-hor {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 0.4em 0.8em;
+    margin: 0.5em 0;
+}
+
+.group-vert {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 0.4em 0.5em;
+    margin: 0.5em 0;
+}
+
+.group-element {
+    /* background-color: rgb(245, 206, 156); */
+    /* padding: 0.1em; */
+    /* border-radius: 5px; */
+    width: fit-content;
+    margin: 0;
+}

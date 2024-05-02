@@ -1,0 +1,53 @@
+
+.log-entry {
+    background-color: rgb(252, 252, 252);
+    margin-bottom: 0.5em;
+}
+
+.log-header {
+    font-size: 70%;
+    background-color: rgb(143, 238, 238);
+    border: solid 1px rgb(105, 173, 173);
+    border-radius: 0.4em 0.4em 0 0;
+    padding: 0.1em 0.5em;
+    margin-bottom: -1px;
+    cursor: pointer;
+}
+
+.log-content {
+    display: block;
+    border: solid 1px rgb(105, 173, 173);
+    padding: 0.5em;
+}
+
+.log-content-hidden {
+    display: none;
+    border: solid 1px rgb(105, 173, 173);
+    padding: 0.5em;
+}
+
+
+table {
+    margin: 0.5em 0;
+    font-size: 80%;
+    width: fit-content;
+    border-collapse: collapse;
+}
+
+td, th {
+    border: 1px solid #888;
+    padding: 2px 8px;
+}
+
+th {
+    background-color: #888;
+    color: white;
+}
+
+td {
+    text-align: right;
+}
+
+table {
+    empty-cells: hide;
+}
