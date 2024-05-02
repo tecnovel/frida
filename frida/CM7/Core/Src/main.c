@@ -95,7 +95,6 @@ static void blink_cb(void *arg) {  // Blink periodically
   (void) arg;
 }
 
-
 /* USER CODE END 0 */
 
 /**

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vprobe Test</title>
+    <link rel="stylesheet" href="vprobetest.css">
+    <link rel="stylesheet" href="results.css">
+    <script src="results.js"></script>
+    <script src="vprobetest.js"></script>
+</head>
+
+<body onload="InitVprobe()">
+<div class="top-container cont">
+    <header>
+        <h1>VProbe</h1>
+        Module Probe Commissioning Qualification Troubleshooting
+    </header>
+
+    <main class="cont-flex">
+
+        <div class="cont panel">
+            <div style="display: flex; flex-direction:row; flex-wrap:nowrap;">
+                <div style="display:flex; width: 35px; align-items: center;">
+                    <img id="statusimg" src="red.png" width="30px" height="30px" alt="Status">
+                </div>
+                <!-- <form> -->
+                <div class="group-hor">
+                    <div class="group-element">
+                        <button class="w7" id="btnConnect" onclick="doConnect(this)">Connect</button>
+                        <!-- <div class="controls"> -->
+                        <button id="btnVersion" onclick="doGetVersion()">Version</button>
+                        <!-- </div> -->
+                    </div>
+                    <div class="group-element">
+                        <label for="forStat">Status:</label>
+                        <input class="debug" id="debug" value="" readonly/>
+                    </div>
+                </div>
+                <!-- </form> -->
+            </div>
+        </div>
+
+
+        <div class="cont tabs">
+            <button class="tablinks active" onclick="openTab(event, 'PanelQualification')">Qualification</button>
+            <button class="tablinks" onclick="openTab(event, 'PanelStatistics')">Statistics</button>
+            <button class="tablinks" onclick="openTab(event, 'PanelLinearity')">Linearity</button>
+            <button class="tablinks" onclick="openTab(event, 'PanelDebug')">Debug</button>
+        </div>
+
+        <!-- Qualification -->
+        <div id="PanelQualification" class="tabcontent cont panel">
+            <div class="group-hor">
+                <div class="group-element">
+                    <input type="checkbox" name="Prog 1:" value="Prog1" checked="checked">
+                    <label for="prog1_l">Prog 1</label><br>
+                    <input type="checkbox" name="Prog 2" value="Prog2" checked="checked">
+                    <label for="prog2_l">Prog 2</label><br>
+                    <input type="checkbox" name="Histogram" value="Histo" checked="checked">
+                    <label for="hist_l">Histogramm</label><br>
+                    <input type="checkbox" name="Linearity" value="Lin" checked="checked">
+                    <label for="lin_l">Linearity</label>
+				</div>
+                <div class="group-element">
+                    <button class="w5" id="quali_run" onclick="doQualification(event)">Run</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div id="PanelStatistics" class="tabcontent cont-hidden panel">
+            <form id="statistics" action="/stat" method="POST">
+                <div class="group-hor">
+                    <div class="group-element">
+                        <label for="stat_ch_l">CH:</label>
+                        <input type="radio" name="stat_ch" value="1" checked />
+                        <label for="stat_ch1_l">1</label>
+                        <input type="radio" name="stat_ch" value="2"/>
+                        <label for="stat_ch2_l">2</label>
+                    </div>
+                    <div class="group-element">
+                        <label for="stat_v_l">V<sub>pin</sub>:</label>
+                        <input type="text" class="inp w5" name="stat_v" value="1.0"/>
+                    </div>
+                    <div class="group-element">
+                        <label for="stat_v_l">#:</label>
+                        <input type="text" class="inp w3" name="stat_n" value="100"/>
+                        <button type="submit" id="stat_run">Start</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Linearity -->
+        <div id="PanelLinearity" class="tabcontent cont-hidden panel">
+            <form id="linearity" action="/linearity" method="POST">
+                <div class="group-hor">
+                    <div class="group-element">
+                        <label for="lin_ch_l">CH:</label>
+                        <input type="radio" name="lin_ch" value="1" checked />
+                        <label for="lin_ch1_l">1</label>
+                        <input type="radio" name="lin_ch" value="2"/>
+                        <label for="lin_ch2_l">2</label>
+                    </div>
+                    <div class="group-element">
+                        <label for="lin_v_l">#:</label>
+                        <input type="text" class="inp w3" name="lin_n" value="4"/>
+                        <button type="submit" id="lin_run">Start</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Debug -->
+        <div id="PanelDebug" class="tabcontent cont-hidden panel">
+            <div class="group-vert">
+                <div class="group-element">
+                    <label for="deb_prog_l">Programming:</label>
+                    <button id="btnProg0" onclick="doProgSelect(0)">disable</button>
+                    <button id="btnProg1" onclick="doProgSelect(1)">CH 1</button>
+                    <button id="btnProg2" onclick="doProgSelect(2)">CH 2</button>
+                    &nbsp
+                    <button class="btn" id="btnProgRun" onclick="doProgRun()">Start</button>
+                </div>
+                <div class="group-element">
+                    <label for="deb_vdip_l">Set V<sub>dip</sub>:</label>
+                    <input type="number" class="inp w5" id="vdipValue" value="0" min="0" max="3.3"step="0.0001"/>
+                    <button onclick="doSetVoltage('value')">set</button>
+                    &nbsp;
+                    <button onclick="doSetVoltage('0.0')">0.0 V</button>
+                    <button onclick="doSetVoltage('0.5')">0.5 V</button>
+                    <button onclick="doSetVoltage('1.0')">1.0 V</button>
+                    <button onclick="doSetVoltage('1.5')">1.5 V</button>
+                    <button onclick="doSetVoltage('2.0')">2.0 V</button>
+                </div>
+                <div class="group-elenemt">
+                    <button onclick="doReset()">Reset</button>
+                    <button onclick="doGetState()">Get State</button>
+                    <button onclick="doScanI2C()">Scan I2C bus</button>
+                </div>
+                <div class="group-element">
+                    <label for="deb_raw_l">Read raw:</label>
+					<input  type="text" inputmode="numeric" class="inp w3" id="i2caddr" value="62" min="0" max="127" />
+                    <input  type="text" inputmode="numeric" class="inp w3" id="i2csize" value="18" min="0" max="63" />
+                    <button onclick="doReadRaw(-1,-1)">read</button>
+                    &nbsp;
+                    <button onclick="doReadRaw(62,18)">CH 1</button>
+                    <button onclick="doReadRaw(63,18)">CH 2</button>
+                </div>
+                <div class="group-element">
+                    <label for="deb_read_l">Read:</label>
+                    <input type="text" inputmode="numeric" class="inp w3" id="count" value="1" min="1" max="1000"/>
+                    &nbsp;
+                    <button onclick="doRead(1)">CH 1</button>
+                    <button onclick="doRead(2)">CH 2</button>
+                    <button onclick="doRead(0)">CH 1&2</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cont-flex">
+        <div>
+            <button class="btn-result w5" onclick="log_HideAll()">Hide All</button>
+            <button class="btn-result w5" onclick="log_ShowAll()">Show All</button>
+            <button class="btn-result w5">Export</button>
+            <button class="btn-result w5" onclick="log_DeleteAll()">Delete All</button>
+        </div>
+        <div class="results cont-scrollable" id="results"></div>
+        </div>
+    </main>
+
+    <footer>
+        <div> 1.12.2023</div><div style="text-align: right;">Beat Meier &nbsp; PSI</div>
+    </footer>
+
+</div>
+</body>
+
+</html>
