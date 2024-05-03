@@ -1,11 +1,5 @@
 
-#include "TinyUSB/tusb.h"
-
-#include "ff.h"
-#include "fatfs.h"
-
-#include "ff_gen_drv.h"
-#include "sd_diskio.h"
+#include "frida.h"
 
 void fatfs_init(void) {
 

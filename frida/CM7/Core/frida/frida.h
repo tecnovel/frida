@@ -11,6 +11,10 @@
 
 #include "main.h"
 
+//fatfs
+#include "fatfs/fatfs.h"
+#include "fatfs/sd_diskio.h"
+
 
 // usb
 #include "usb/TinyUSB/tusb.h"
