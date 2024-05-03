@@ -30,8 +30,6 @@
 
 /* Extern variables ---------------------------------------------------------*/
 
-extern SD_HandleTypeDef hsd1;
-
 /* USER CODE BEGIN BeforeInitSection */
 /* can be used to modify / undefine following code or add code */
 /* USER CODE END BeforeInitSection */

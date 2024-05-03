@@ -51,6 +51,8 @@ bool dns_query_proc(const char *name, uint32_t *addr)
 
 void frida_init(){
 
+	MX_FATFS_Init();
+
 	mg_mgr_init(&mgr);        // Initialise Mongoose event manager
 	mg_log_set(MG_LL_DEBUG);  // Set log level
 	mg_log_set_fn(log_fn, NULL);

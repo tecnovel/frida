@@ -1,7 +1,5 @@
 
 #include "frida.h"
-#include "sd_diskio.h"
-#include "fatfs.h"
 
 void fatfs_init(void) {
 

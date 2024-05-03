@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -164,7 +163,6 @@ __HAL_RCC_HSEM_CLK_ENABLE();
   MX_USB_OTG_HS_PCD_Init();
   MX_RNG_Init();
   MX_SDMMC1_SD_Init();
-  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
 
