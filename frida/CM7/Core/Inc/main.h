@@ -37,6 +37,10 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
+
+extern SD_HandleTypeDef hsd1;
+
+  
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
