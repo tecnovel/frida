@@ -66,11 +66,3 @@ uint64_t mg_millis(void) {	// Let Mongoose use our uptime function
 	return HAL_GetTick();	// Return number of milliseconds since boot
 }
 
-// Hardware random generator
-void mg_random(void *buf, size_t len) {  // Use on-board RNG
-  for (size_t n = 0; n < len; n += sizeof(uint32_t)) {
-    uint32_t r;
-    HAL_RNG_GenerateRandomNumber(&hrng, &r);
-    memcpy((char *) buf + n, &r, n + sizeof(r) > len ? len - n : sizeof(r));
-  }
-}
