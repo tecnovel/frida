@@ -27,6 +27,7 @@
 /* USER CODE END FirstSection */
 /* Includes ------------------------------------------------------------------*/
 #include "bsp_driver_sd.h"
+#include "frida.h"
 
 /* Extern variables ---------------------------------------------------------*/
 

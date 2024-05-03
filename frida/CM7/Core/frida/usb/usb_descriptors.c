@@ -155,15 +155,15 @@ uint8_t const * tud_descriptor_configuration_cb(uint8_t index)
 // array of pointer to string descriptors
 static char const* string_desc_arr [] =
 {
-  [STRID_LANGID]       	= (const char[]) { 0x09, 0x04 }, // supported language is English (0x0409)
-  [STRID_MANUFACTURER] 	= "PSI",                         // Manufacturer
-  [STRID_PRODUCT]      	= "TinyUSB Net Device",          // Product
-  [STRID_SERIAL]       	= NULL,                      // Serial
-  [STRID_INTERFACE]    	= "TinyUSB Network Interface",   // Interface Description
+  [STRID_LANGID]       	= (const char[]) { 0x09, 0x04 }, 	// supported language is English (0x0409)
+  [STRID_MANUFACTURER] 	= "PSI",                         	// Manufacturer
+  [STRID_PRODUCT]      	= "Frida",          				// Product
+  [STRID_SERIAL]       	= NULL,                      		// Serial
+  [STRID_INTERFACE]    	= "Frida Network Interface",   		// Interface Description
 
   // STRID_MAC index is handled separately
-  [STRID_CDC]    		= "TinyUSB CDC",   				 // CDC Interface
-  [STRID_MSC]    		= "TinyUSB MSC"   				 // MSC Interface
+  [STRID_CDC]    		= "Frida CDC",   				 	// CDC Interface
+  [STRID_MSC]    		= "Frida MSC"   				 	// MSC Interface
 };
 
 static uint16_t _desc_str[32];
@@ -171,52 +171,6 @@ static uint16_t _desc_str[32];
 // Invoked when received GET STRING DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid)
-//{
-//  (void) langid;
-//
-//  unsigned int chr_count = 0;
-//
-//  if (STRID_LANGID == index)
-//  {
-//    memcpy(&_desc_str[1], string_desc_arr[STRID_LANGID], 2);
-//    chr_count = 1;
-//  }
-//  else if (STRID_MAC == index)
-//  {
-//    // Convert MAC address into UTF-16
-//
-//    for (unsigned i=0; i<sizeof(tud_network_mac_address); i++)
-//    {
-//      _desc_str[1+chr_count++] = "0123456789ABCDEF"[(tud_network_mac_address[i] >> 4) & 0xf];
-//      _desc_str[1+chr_count++] = "0123456789ABCDEF"[(tud_network_mac_address[i] >> 0) & 0xf];
-//    }
-//  }
-//  else
-//  {
-//    // Note: the 0xEE index string is a Microsoft OS 1.0 Descriptors.
-//    // https://docs.microsoft.com/en-us/windows-hardware/drivers/usbcon/microsoft-defined-usb-descriptors
-//
-//    if ( !(index < sizeof(string_desc_arr)/sizeof(string_desc_arr[0])) ) return NULL;
-//
-//    const char* str = string_desc_arr[index];
-//
-//    // Cap at max char
-//    chr_count = (uint8_t) strlen(str);
-//    if ( chr_count > (TU_ARRAY_SIZE(_desc_str) - 1)) chr_count = TU_ARRAY_SIZE(_desc_str) - 1;
-//
-//    // Convert ASCII string into UTF-16
-//    for (unsigned int i=0; i<chr_count; i++)
-//    {
-//      _desc_str[1+i] = str[i];
-//    }
-//  }
-//
-//  // first byte is length (including header), second byte is string type
-//  _desc_str[0] = (uint16_t) ((TUSB_DESC_STRING << 8 ) | (2*chr_count + 2));
-//
-//  return _desc_str;
-//}
-
 {
   (void) langid;
   unsigned int chr_count = 0;

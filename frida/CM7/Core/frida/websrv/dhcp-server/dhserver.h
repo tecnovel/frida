@@ -31,10 +31,7 @@
 #ifndef DHSERVER_H
 #define DHSERVER_H
 
-//#include <stdint.h>
-//#include <stdbool.h>
-//#include <stdio.h>
-//#include <string.h>
+
 #include "../mongoose/mongoose.h"
 
 #define ERR_OK 0

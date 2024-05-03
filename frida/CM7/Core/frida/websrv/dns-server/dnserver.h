@@ -30,10 +30,6 @@
 #ifndef DNSERVER
 #define DNSERVER
 
-//#include <stdint.h>
-//#include <stdbool.h>
-//#include <stdio.h>
-//#include <string.h>
 #include "../mongoose/mongoose.h"
 
 

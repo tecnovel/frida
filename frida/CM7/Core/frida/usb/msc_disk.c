@@ -1,22 +1,34 @@
 
 #include "frida.h"
 
+/**
+  * @brief Initializes the FATFS filesystem and the SD card.
+  * @note This function initializes the FATFS filesystem and mounts the SD card.
+  *       It also handles error conditions by blinking an LED indefinitely if
+  *       initialization fails.
+  * @retval None
+  */
 void fatfs_init(void) {
 
+	// Initialize the SD card
 	if(SD_Driver.disk_initialize(0) != 0){
+		// If initialization fails, blink LED2 indefinitely
 		while(1){
 			HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
 			HAL_Delay(50);
 		}
 	}
 
+	// Mount the FATFS filesystem on the SD card
 	if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != 0){
+		// If mounting fails, blink LED3 indefinitely
 		while(1){
 			HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
 			HAL_Delay(50);
 		}
 	}
 }
+
 
 #if CFG_TUD_MSC
 
@@ -33,7 +45,7 @@ void tud_msc_inquiry_cb(uint8_t lun, uint8_t vendor_id[8], uint8_t product_id[16
 {
   (void) lun;
 
-  const char vid[] = "TinyUSB";
+  const char vid[] = "PSI";
   const char pid[] = "Frida";
   const char rev[] = "1.0";
 
