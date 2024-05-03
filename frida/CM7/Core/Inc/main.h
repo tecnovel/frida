@@ -32,15 +32,10 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
-extern RNG_HandleTypeDef hrng;
-
-extern struct mg_tcpip_if *s_ifp;
 
 /* USER CODE END ET */
 

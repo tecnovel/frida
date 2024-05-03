@@ -21,7 +21,6 @@ size_t usb_tx(const void *buf, size_t len, struct mg_tcpip_if *ifp);
 bool usb_up(struct mg_tcpip_if *ifp);
 
 uint64_t mg_millis(void);
-void mg_random(void *buf, size_t len);
 
 
 
