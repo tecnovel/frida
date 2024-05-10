@@ -13,7 +13,8 @@
 
 //fatfs
 #include "fatfs/fatfs.h"
-#include "fatfs/sd_diskio.h"
+#include "fatfs/drv/SD/sd_diskio.h"
+#include "fatfs/drv/flash/flash_diskio.h"
 
 
 // usb
@@ -28,6 +29,10 @@
 #include "websrv/dns-server/dnserver.h"
 #include "websrv/ip_settings.h"
 #include "eventHandler.h"
+
+/* select memory driver (only one driver!!!) */
+#define MEMORY_DRV		SD_Driver
+//#define MEMORY_DRV		FLASH_Driver
 
 
 
