@@ -1,6 +1,7 @@
 
 #include "frida.h"
 
+
 /**
   * @brief Initializes the FATFS filesystem and the SD card.
   * @note This function initializes the FATFS filesystem and mounts the SD card.
@@ -11,7 +12,7 @@
 void fatfs_init(void) {
 
 	// Initialize the SD card
-	if(SD_Driver.disk_initialize(0) != 0){
+	if(MEMORY_DRV.disk_initialize(0) != 0){
 		// If initialization fails, blink LED2 indefinitely
 		while(1){
 			HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
@@ -34,8 +35,6 @@ void fatfs_init(void) {
 
 // whether host does safe-eject
 static bool ejected = false;
-
-#define DISK_BLOCK_SIZE 512
 
 FRESULT res;
 
@@ -77,9 +76,9 @@ void tud_msc_capacity_cb(uint8_t lun, uint32_t* block_count, uint16_t* block_siz
 
 	DRESULT res;
 
-	res = SD_Driver.disk_ioctl(lun, GET_SECTOR_COUNT, block_count);
+	res = MEMORY_DRV.disk_ioctl(lun, GET_SECTOR_COUNT, block_count);
 	if(res != RES_OK) return;
-    res = SD_Driver.disk_ioctl(lun, GET_SECTOR_SIZE, block_size);
+    res = MEMORY_DRV.disk_ioctl(lun, GET_SECTOR_SIZE, block_size);
     if(res != RES_OK) return;
 
     return;
@@ -111,50 +110,37 @@ bool tud_msc_start_stop_cb(uint8_t lun, uint8_t power_condition, bool start, boo
 // Callback invoked when received READ10 command.
 // Copy disk's data to buffer (up to bufsize) and return number of copied bytes.
 int32_t tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void* buffer, uint32_t bufsize) {
-    (void) lun;
+	(void) lun;
 
-    DWORD sector = lba; // Logical Block Addressing
-    uint16_t blocksize;
-    SD_Driver.disk_ioctl(lun, GET_SECTOR_SIZE, &blocksize);
-    //UINT byteRead;
+	DWORD sector = lba; // Logical Block Addressing
+	uint16_t blocksize;
+	MEMORY_DRV.disk_ioctl(lun, GET_SECTOR_SIZE, &blocksize);
+	//UINT byteRead;
 
-    //DRESULT res = disk_read(0, buffer, sector, bufsize / DISK_BLOCK_SIZE);
-    DRESULT res = SD_Driver.disk_read(lun, buffer, sector, bufsize / blocksize);
-    if (res != RES_OK) {
-        return -1;
-    }
+	DRESULT res = MEMORY_DRV.disk_read(lun, buffer, sector, bufsize / blocksize);
+	if (res != RES_OK) {
+		return -1;
+	}
 
-    return bufsize;
-}
-
-bool tud_msc_is_writable_cb (uint8_t lun)
-{
-  (void) lun;
-
-#ifdef CFG_EXAMPLE_MSC_READONLY
-  return false;
-#else
-  return true;
-#endif
+	return bufsize;
 }
 
 // Callback invoked when received WRITE10 command.
 // Process data in buffer to disk's storage and return number of written bytes
 int32_t tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t* buffer, uint32_t bufsize) {
-    (void) lun;
+	(void) lun;
 
-    DWORD sector = lba; // Logical Block Addressing
-    uint16_t blocksize;
-    SD_Driver.disk_ioctl(lun, GET_SECTOR_SIZE, &blocksize);
-    //UINT byteWritten;
+	DWORD sector = lba; // Logical Block Addressing
+	uint16_t blocksize;
+	MEMORY_DRV.disk_ioctl(lun, GET_SECTOR_SIZE, &blocksize);
+	//UINT byteWritten;
 
-    //DRESULT res = disk_write(0, buffer, sector, bufsize / DISK_BLOCK_SIZE);
-    DRESULT res = SD_Driver.disk_write(lun, buffer, sector, bufsize / blocksize);
-    if (res != RES_OK) {
-        return -1;
-    }
+	DRESULT res = MEMORY_DRV.disk_write(lun, buffer, sector, bufsize / blocksize);
+	if (res != RES_OK) {
+		return -1;
+	}
 
-    return bufsize;
+	return bufsize;
 }
 
 // Callback invoked when received an SCSI command not in built-in list below

@@ -39,6 +39,7 @@ extern "C" {
 
 
 extern SD_HandleTypeDef hsd1;
+extern SPI_HandleTypeDef hspi2;
 
   
 /* USER CODE END ET */
@@ -87,6 +88,10 @@ void Error_Handler(void);
 #define SDIO1_D1_GPIO_Port GPIOC
 #define CEC_CK_MCO1_Pin GPIO_PIN_8
 #define CEC_CK_MCO1_GPIO_Port GPIOA
+#define SPI2_SCK_Pin GPIO_PIN_12
+#define SPI2_SCK_GPIO_Port GPIOA
+#define FLASH_CS_Pin GPIO_PIN_11
+#define FLASH_CS_GPIO_Port GPIOA
 #define ULPI_DIR_Pin GPIO_PIN_11
 #define ULPI_DIR_GPIO_Port GPIOI
 #define LED1_Pin GPIO_PIN_12
@@ -101,6 +106,10 @@ void Error_Handler(void);
 #define OSC_IN_GPIO_Port GPIOH
 #define ULPI_STP_Pin GPIO_PIN_0
 #define ULPI_STP_GPIO_Port GPIOC
+#define PMOD_3_Pin GPIO_PIN_2
+#define PMOD_3_GPIO_Port GPIOC
+#define PMOD_2_Pin GPIO_PIN_3
+#define PMOD_2_GPIO_Port GPIOC
 #define ULPI_NXT_Pin GPIO_PIN_4
 #define ULPI_NXT_GPIO_Port GPIOH
 #define LED4_Pin GPIO_PIN_15

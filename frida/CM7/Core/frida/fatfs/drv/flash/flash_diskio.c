@@ -11,8 +11,8 @@
 /*-----------------------------------------------------------------------*/
 
 /* Includes ------------------------------------------------------------------*/
-#include "diskio.h"
-#include "drv/ff_gen_drv.h"
+#include "flash_diskio.h"
+#include "w25qxx.h"
 
 #if defined ( __GNUC__ )
 #ifndef __weak
@@ -20,11 +20,22 @@
 #endif
 #endif
 
+#define BLOCK_SIZE		512
+
+W25QXX_HandleTypeDef flash;
+
+const Diskio_drvTypeDef  FLASH_Driver =
+{
+  flash_initialize,
+  flash_status,
+  flash_read,
+  flash_write,
+  flash_ioctl,
+};
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-extern Disk_drvTypeDef  disk;
-
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -33,14 +44,11 @@ extern Disk_drvTypeDef  disk;
   * @param  pdrv: Physical drive number (0..)
   * @retval DSTATUS: Operation status
   */
-DSTATUS disk_status (
+DSTATUS flash_status (
 	BYTE pdrv		/* Physical drive number to identify the drive */
 )
 {
-  DSTATUS stat;
-
-  stat = disk.drv[pdrv]->disk_status(disk.lun[pdrv]);
-  return stat;
+  return RES_OK;
 }
 
 /**
@@ -48,21 +56,12 @@ DSTATUS disk_status (
   * @param  pdrv: Physical drive number (0..)
   * @retval DSTATUS: Operation status
   */
-DSTATUS disk_initialize (
+DSTATUS flash_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-  DSTATUS stat = RES_OK;
-
-  if(disk.is_initialized[pdrv] == 0)
-  {
-    stat = disk.drv[pdrv]->disk_initialize(disk.lun[pdrv]);
-    if(stat == RES_OK)
-    {
-      disk.is_initialized[pdrv] = 1;
-    }
-  }
-  return stat;
+	w25qxx_init(&flash, &hspi2, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
+	return RES_OK;
 }
 
 /**
@@ -73,17 +72,16 @@ DSTATUS disk_initialize (
   * @param  count: Number of sectors to read (1..128)
   * @retval DRESULT: Operation result
   */
-DRESULT disk_read (
+DRESULT flash_read (
 	BYTE pdrv,		/* Physical drive nmuber to identify the drive */
 	BYTE *buff,		/* Data buffer to store read data */
 	DWORD sector,	        /* Sector address in LBA */
 	UINT count		/* Number of sectors to read */
 )
 {
-  DRESULT res;
 
-  res = disk.drv[pdrv]->disk_read(disk.lun[pdrv], buff, sector, count);
-  return res;
+  w25qxx_read(&flash, sector*BLOCK_SIZE, buff, count*BLOCK_SIZE);
+  return RES_OK;
 }
 
 /**
@@ -94,20 +92,25 @@ DRESULT disk_read (
   * @param  count: Number of sectors to write (1..128)
   * @retval DRESULT: Operation result
   */
-#if _USE_WRITE == 1
-DRESULT disk_write (
+
+DRESULT flash_write (
 	BYTE pdrv,		/* Physical drive nmuber to identify the drive */
 	const BYTE *buff,	/* Data to be written */
 	DWORD sector,		/* Sector address in LBA */
 	UINT count        	/* Number of sectors to write */
 )
 {
-  DRESULT res;
-
-  res = disk.drv[pdrv]->disk_write(disk.lun[pdrv], buff, sector, count);
-  return res;
+	uint8_t buf[count];
+	w25qxx_read(&flash, sector*BLOCK_SIZE, (uint8_t*) buff, count*BLOCK_SIZE);
+	uint8_t res = 0xFF;
+	for(uint16_t x=0;x<BLOCK_SIZE;x++){
+	  res &= buf[x];
+	}
+	if(res!=0xFF)		w25qxx_erase(&flash, sector*BLOCK_SIZE, count*BLOCK_SIZE);
+	w25qxx_write(&flash, sector*BLOCK_SIZE, (uint8_t*) buff, count*BLOCK_SIZE);
+  return RES_OK;
 }
-#endif /* _USE_WRITE == 1 */
+
 
 /**
   * @brief  I/O control operation
@@ -116,8 +119,8 @@ DRESULT disk_write (
   * @param  *buff: Buffer to send/receive control data
   * @retval DRESULT: Operation result
   */
-#if _USE_IOCTL == 1
-DRESULT disk_ioctl (
+
+DRESULT flash_ioctl (
 	BYTE pdrv,		/* Physical drive nmuber (0..) */
 	BYTE cmd,		/* Control code */
 	void *buff		/* Buffer to send/receive control data */
@@ -125,10 +128,31 @@ DRESULT disk_ioctl (
 {
   DRESULT res;
 
-  res = disk.drv[pdrv]->disk_ioctl(disk.lun[pdrv], cmd, buff);
+  switch (cmd){
+  case GET_SECTOR_COUNT:
+	  // 16 MB
+	*(DWORD*) buff = 0x8000;
+	  res = RES_OK;
+	break;
+  case GET_SECTOR_SIZE:
+	*(WORD*) buff = BLOCK_SIZE;
+	res = RES_OK;
+	break;
+  case CTRL_SYNC:
+  case MMC_GET_CSD:
+  case MMC_GET_CID:
+  case MMC_GET_OCR:
+
+	  res = RES_OK;
+
+	break;
+  default:
+	res = RES_PARERR;
+  }
+
   return res;
 }
-#endif /* _USE_IOCTL == 1 */
+
 
 /**
   * @brief  Gets Time from RTC
