@@ -100,10 +100,10 @@ DRESULT flash_write (
 	UINT count        	/* Number of sectors to write */
 )
 {
-	uint8_t buf[count];
+	uint8_t buf[count*BLOCK_SIZE];
 	w25qxx_read(&flash, sector*BLOCK_SIZE, (uint8_t*) buff, count*BLOCK_SIZE);
 	uint8_t res = 0xFF;
-	for(uint16_t x=0;x<BLOCK_SIZE;x++){
+	for(uint16_t x=0;x<count*BLOCK_SIZE;x++){
 	  res &= buf[x];
 	}
 	if(res!=0xFF)		w25qxx_erase(&flash, sector*BLOCK_SIZE, count*BLOCK_SIZE);

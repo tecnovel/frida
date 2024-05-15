@@ -11,10 +11,19 @@
 
 #include "main.h"
 
+/* select memory driver (only one driver!!!) */
+//#define USE_SD
+#define USE_FLASH
+
 //fatfs
 #include "fatfs/fatfs.h"
-#include "fatfs/drv/SD/sd_diskio.h"
-#include "fatfs/drv/flash/flash_diskio.h"
+#ifdef USE_SD
+	#include "fatfs/drv/SD/sd_diskio.h"
+#endif
+
+#ifdef USE_FLASH
+	#include "fatfs/drv/flash/flash_diskio.h"
+#endif
 
 
 // usb
@@ -30,9 +39,16 @@
 #include "websrv/ip_settings.h"
 #include "eventHandler.h"
 
-/* select memory driver (only one driver!!!) */
-#define MEMORY_DRV		SD_Driver
-//#define MEMORY_DRV		FLASH_Driver
+
+
+#include "fatfs/fatfs.h"
+#ifdef USE_SD
+	#define MEMORY_DRV		SD_Driver
+#endif
+
+#ifdef USE_FLASH
+	#define MEMORY_DRV		FLASH_Driver
+#endif
 
 
 
