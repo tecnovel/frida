@@ -7,6 +7,8 @@
 
 #include "frida.h"
 
+#include "cli/src/cmd_io.h"
+
 /**
   * @brief Mongoose event manager structure.
   */
@@ -16,6 +18,8 @@ struct mg_mgr mgr;
   * @brief Pointer to the TCP/IP network interface.
   */
 struct mg_tcpip_if* s_ifp;
+
+term_cmd_input_type term_in;
 
 /**
   * @brief DHCP entries for IP address allocation.
@@ -62,7 +66,7 @@ bool dns_query_proc(const char *name, uint32_t *addr) {
   * @note This function initializes the FATFS filesystem, TCP/IP stack, USB, and other necessary components.
   * @retval None
   */
-void frida_init() {
+void frida_init(void (*blink)(void *)) {
     MX_FATFS_Init();
     mg_mgr_init(&mgr);        // Initialise Mongoose event manager
     mg_log_set(MG_LL_DEBUG);  // Set log level
@@ -82,16 +86,21 @@ void frida_init() {
     mg_tcpip_init(&mgr, &mif);
 
     dhserv_init(&mgr, &dhcp_config);
-
     dnserv_init(&mgr, dns_query_proc);
 
     mg_http_listen(&mgr, "http://0.0.0.0:80", fn, &mgr);
+    if(blink != NULL){
+    	mg_timer_add(&mgr, 500, MG_TIMER_REPEAT, blink, &mgr);
+    }
 
     MG_INFO(("Init USB ..."));
     init_tud_network_mac_address();
 
     fatfs_init();
     tud_init(BOARD_TUD_RHPORT);
+
+    cmd_proc_interface_init(system_putchar, system_getchar, system_get_hostname, HAL_Delay);
+    term_cmd_input_init(&term_in);
 
     MG_INFO(("Init done, starting main loop ..."));
 }
@@ -114,6 +123,13 @@ void frida_usbTask() {
     tud_task();
 }
 
+
+void frida_cliTask() {
+	int len = term_cmd_input_get_cmd(&term_in);
+	if (len > 0)
+		cmd_process(term_in.command, len);
+}
+
 /**
   * @brief Main loop for Frida device operations.
   * @note This function runs the main loop for the Frida device, including server and USB tasks.
@@ -122,4 +138,5 @@ void frida_usbTask() {
 void frida_loop() {
     frida_srvTask();
     frida_usbTask();
+    frida_cliTask();
 }

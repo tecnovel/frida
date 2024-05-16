@@ -10,19 +10,23 @@
 
 
 #include "main.h"
+#include "frida_conf.h"
 
-/* select memory driver (only one driver!!!) */
-//#define USE_SD
-#define USE_FLASH
+
+//cli
+#include "cli/src/term_cmd_input.h"
+#include "cli/src/cmd_proc_interface.h"
+#include "cli/src/cmd_processor.h"
 
 //fatfs
 #include "fatfs/fatfs.h"
+
 #ifdef USE_SD
-	#include "fatfs/drv/SD/sd_diskio.h"
+#include "fatfs/drv/SD/sd_diskio.h"
 #endif
 
 #ifdef USE_FLASH
-	#include "fatfs/drv/flash/flash_diskio.h"
+#include "fatfs/drv/flash/flash_diskio.h"
 #endif
 
 
@@ -41,7 +45,6 @@
 
 
 
-#include "fatfs/fatfs.h"
 #ifdef USE_SD
 	#define MEMORY_DRV		SD_Driver
 #endif
@@ -49,7 +52,6 @@
 #ifdef USE_FLASH
 	#define MEMORY_DRV		FLASH_Driver
 #endif
-
 
 
 extern struct mg_mgr mgr;
@@ -60,8 +62,8 @@ extern SD_HandleTypeDef hsd1;
 void frida_init();
 void frida_loop();
 
-// optional
-//void frida_srvTask();
-//void frida_usbTask();
+void frida_srvTask();
+void frida_usbTask();
+void frida_cliTask();
 
 #endif /* FRIDA_FRIDA_H_ */

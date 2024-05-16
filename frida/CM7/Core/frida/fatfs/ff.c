@@ -5690,7 +5690,7 @@ FRESULT f_mkfs (
 				if (disk_write(pdrv, buf, sect, (UINT)n) != RES_OK) return FR_DISK_ERR;
 				mem_set(buf, 0, ss);
 				sect += n; nsect -= n;
-			} while (nsect);
+			} while (0/*nsect*/);//TODO
 		}
 
 		/* Initialize root directory (fill with zero) */
