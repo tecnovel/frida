@@ -11,8 +11,8 @@
 #include "usb/TinyUSB/tusb_option.h"
 
 /* select memory driver (only one driver!!!) */
-#define USE_SD
-//#define USE_FLASH
+//#define USE_SD
+#define USE_FLASH
 
 
 #define DRIVE_LABEL_NAME            "FRIDA"

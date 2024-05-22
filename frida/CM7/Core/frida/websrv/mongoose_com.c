@@ -41,12 +41,6 @@ uint16_t tud_network_xmit_cb(uint8_t *dst, void *ref, uint16_t arg) {
   return arg;
 }
 
-// logging function
-void log_fn(char ch, void *param) {
-	tud_cdc_write_char(ch);
-	tud_cdc_write_flush();
-}
-
 // send via usb network (mongoose)
 size_t usb_tx(const void *buf, size_t len, struct mg_tcpip_if *ifp) {
   if (!tud_ready()) return 0;

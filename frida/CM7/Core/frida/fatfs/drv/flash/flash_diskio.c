@@ -13,6 +13,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "flash_diskio.h"
 #include "w25qxx.h"
+#include <string.h>
 
 #if defined ( __GNUC__ )
 #ifndef __weak
@@ -100,14 +101,20 @@ DRESULT flash_write (
 	UINT count        	/* Number of sectors to write */
 )
 {
-	uint8_t buf[count*BLOCK_SIZE];
-	w25qxx_read(&flash, sector*BLOCK_SIZE, (uint8_t*) buff, count*BLOCK_SIZE);
-	uint8_t res = 0xFF;
-	for(uint16_t x=0;x<count*BLOCK_SIZE;x++){
-	  res &= buf[x];
-	}
-	if(res!=0xFF)		w25qxx_erase(&flash, sector*BLOCK_SIZE, count*BLOCK_SIZE);
-	w25qxx_write(&flash, sector*BLOCK_SIZE, (uint8_t*) buff, count*BLOCK_SIZE);
+	uint8_t buf[4096];
+	w25qxx_read(&flash, (sector/8)*8*BLOCK_SIZE, buf, 4096);
+	w25qxx_erase(&flash, sector*BLOCK_SIZE, count*BLOCK_SIZE);
+	memcpy(buf+(sector%8)*BLOCK_SIZE, buff, count*BLOCK_SIZE);
+	w25qxx_write(&flash, (sector/8)*8*BLOCK_SIZE, buf, 4096);
+
+//	w25qxx_erase(&flash, sector*BLOCK_SIZE, count*BLOCK_SIZE);
+//	w25qxx_write(&flash, sector*BLOCK_SIZE, buf, count*BLOCK_SIZE);
+
+//	uint8_t buf[count*BLOCK_SIZE];
+//	w25qxx_read(&flash, sector*BLOCK_SIZE, (uint8_t*) buff, count*BLOCK_SIZE);
+//	w25qxx_erase(&flash, sector*BLOCK_SIZE, count*BLOCK_SIZE);
+//
+//	w25qxx_write(&flash, sector*BLOCK_SIZE, (uint8_t*) buf, count*BLOCK_SIZE);
   return RES_OK;
 }
 

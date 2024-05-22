@@ -8,6 +8,7 @@
 #include "frida.h"
 
 #include "cli/src/cmd_io.h"
+#include "cli/mod_debug.h"
 
 /**
   * @brief Mongoose event manager structure.
@@ -70,7 +71,7 @@ void frida_init(void (*blink)(void *)) {
     MX_FATFS_Init();
     mg_mgr_init(&mgr);        // Initialise Mongoose event manager
     mg_log_set(MG_LL_DEBUG);  // Set log level
-    mg_log_set_fn(log_fn, NULL);
+    mg_log_set_fn(cli_log_mg, NULL);
 
     MG_INFO(("Init TCP/IP stack ..."));
     static struct mg_tcpip_driver driver = {.tx = usb_tx, .up = usb_up};

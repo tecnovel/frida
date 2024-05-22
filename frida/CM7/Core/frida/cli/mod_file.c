@@ -161,7 +161,7 @@ int cmd_ls(int argc, char **argv)
 
   // fatfs.free_clst = fatfs.n_fatent; // FORCE full FAT scan // now changed in ff.c
   res = f_getfree((TCHAR const*)SDPath, &nclst, &fs);
-  if (res == FR_OK) xfs_printf("%u bytes free (%u cluster of %u byte)\r\n", nclst * fs->csize * _MIN_SS, nclst, fs->csize * _MIN_SS);
+  if (res == FR_OK) xfs_printf("%u bytes free (%u cluster of %u byte)\r\n", nclst * fs->csize * FF_MIN_SS, nclst, fs->csize * FF_MIN_SS);
 
   return 0;
 }
@@ -397,7 +397,7 @@ int cmd_mv(int argc, char **argv)
   int exists_src,  exists_dst;
   char *src = argv[1]; // alias for convinience
   char *dst = argv[2];
-  char buffer[_MAX_LFN];
+  char buffer[FF_MAX_LFN];
 
   trim_slashes(src); // note: argv[1] may be modified as src is pointer to argv[1]
   trim_slashes(dst); // note: argv[2] may be modified as dst is pointer to argv[2]
@@ -417,7 +417,7 @@ int cmd_mv(int argc, char **argv)
   }
   else if (exists_dst == IS_DIR)
   {
-    xfs_snprintf(buffer, _MAX_LFN, "%s/%s", dst, basename(src));
+    xfs_snprintf(buffer, FF_MAX_LFN, "%s/%s", dst, basename(src));
     dst = buffer;
   }
 
@@ -455,7 +455,7 @@ int cmd_label(int argc, char **argv)
 
 /******************************************************************************/
 
-#define WORK_BUFF_LEN _MAX_SS
+#define WORK_BUFF_LEN FF_MAX_SS
 static char mkfs_security_phrase[] = "ERASE-ALL";
 int cmd_mkfs(int argc, char **argv)
 {
@@ -477,8 +477,14 @@ int cmd_mkfs(int argc, char **argv)
      return -1;
   }
 
+  MKFS_PARM opt = {
+		  .fmt 		= FM_ANY,
+		  .n_fat 	= 2,
+		  .n_root	= 512,
+  };
+
   // use option FM_SFD : start filesystem at sector 0 without partition table
-  res = f_mkfs((TCHAR const*)SDPath, FM_ANY | FM_SFD, _MIN_SS, buff, WORK_BUFF_LEN);
+  res = f_mkfs((TCHAR const*)SDPath, &opt, buff, WORK_BUFF_LEN);
   if (res != FR_OK)
   {
      xfs_printf("making filesystem failed\r\n");
@@ -657,7 +663,7 @@ int cmd_echo_redir(int argc, char **argv)
 /******************************************************************************/
 
 
-#define CP_BUFF_LEN _MIN_SS
+#define CP_BUFF_LEN FF_MIN_SS
 
 int cmd_cp(int argc, char **argv)
 {
