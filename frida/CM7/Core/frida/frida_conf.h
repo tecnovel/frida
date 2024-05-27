@@ -15,7 +15,7 @@
 /*
  * webserver settings
  */
-#define SLD		"test"
+#define SLD		"frida"
 #define TLD		"psi"
 
 
