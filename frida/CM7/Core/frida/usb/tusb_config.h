@@ -30,21 +30,23 @@
  extern "C" {
 #endif
 
+#include "frida_conf.h"
+
 //--------------------------------------------------------------------+
 // Board Specific Configuration
 //--------------------------------------------------------------------+
 
 // RHPort number used for device can be defined by board.mk, default to port 0
 #ifndef BOARD_TUD_RHPORT
-#define BOARD_TUD_RHPORT      1
+#define BOARD_TUD_RHPORT      FRIDA_PORT
 #endif
 
 // RHPort max operational speed can defined by board.mk
 #ifndef BOARD_TUD_MAX_SPEED
-#define BOARD_TUD_MAX_SPEED   OPT_MODE_HIGH_SPEED
+#define BOARD_TUD_MAX_SPEED   FRIDA_MODE
 #endif
 
-#define CFG_TUSB_MCU		  OPT_MCU_STM32H7
+#define CFG_TUSB_MCU		  FRIDA_MCU
 
 //--------------------------------------------------------------------
 // COMMON CONFIGURATION

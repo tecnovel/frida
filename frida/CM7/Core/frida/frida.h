@@ -45,14 +45,11 @@
 
 
 
-#ifdef USE_SD
+#if defined(USE_SD)
 	#define MEMORY_DRV		SD_Driver
-#endif
-
-#ifdef USE_FLASH
+#elif defined(USE_FLASH)
 	#define MEMORY_DRV		FLASH_Driver
 #endif
-
 
 extern struct mg_mgr mgr;
 extern struct mg_tcpip_if* s_ifp;
@@ -65,5 +62,7 @@ void frida_loop();
 void frida_srvTask();
 void frida_usbTask();
 void frida_cliTask();
+
+void frida_USBinterrupt();
 
 #endif /* FRIDA_FRIDA_H_ */

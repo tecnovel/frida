@@ -238,7 +238,7 @@ void OTG_HS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_HS_IRQn 0 */
 
-	tud_int_handler(BOARD_TUD_RHPORT);
+	frida_USBinterrupt();
 	return;
 
   /* USER CODE END OTG_HS_IRQn 0 */

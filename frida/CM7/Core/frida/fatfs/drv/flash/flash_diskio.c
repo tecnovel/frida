@@ -11,9 +11,13 @@
 /*-----------------------------------------------------------------------*/
 
 /* Includes ------------------------------------------------------------------*/
+#include "frida_conf.h"
+
 #include "flash_diskio.h"
 #include "w25qxx.h"
 #include <string.h>
+
+#ifdef USE_FLASH
 
 #if defined ( __GNUC__ )
 #ifndef __weak
@@ -61,7 +65,7 @@ DSTATUS flash_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-	w25qxx_init(&flash, &hspi2, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
+	w25qxx_init(&flash, &FLASH_SPI, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
 	return RES_OK;
 }
 
@@ -171,5 +175,5 @@ __weak DWORD get_fattime (void)
   return 0;
 }
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+#endif
 

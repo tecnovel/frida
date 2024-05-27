@@ -6,9 +6,9 @@
  */
 
 #include "frida.h"
+#include "frida_conf.h"
 
 #include "cli/src/cmd_io.h"
-#include "cli/mod_debug.h"
 
 /**
   * @brief Mongoose event manager structure.
@@ -55,7 +55,7 @@ const dhcp_config_t dhcp_config =
   * @retval true if the name is resolved successfully, false otherwise.
   */
 bool dns_query_proc(const char *name, uint32_t *addr) {
-    if (strcmp(name, "frida") == 0 || strcmp(name, "frida.local") == 0 || strcmp(name, "frida.psi") == 0) {
+    if (strcmp(name, LOCAL_DOMAIN) == 0 || strcmp(name, FULL_DOMAIN) == 0) {
         *addr = IP_ADDRESS;
         return true;
     }
@@ -70,8 +70,6 @@ bool dns_query_proc(const char *name, uint32_t *addr) {
 void frida_init(void (*blink)(void *)) {
     MX_FATFS_Init();
     mg_mgr_init(&mgr);        // Initialise Mongoose event manager
-    mg_log_set(MG_LL_DEBUG);  // Set log level
-    mg_log_set_fn(cli_log_mg, NULL);
 
     MG_INFO(("Init TCP/IP stack ..."));
     static struct mg_tcpip_driver driver = {.tx = usb_tx, .up = usb_up};
@@ -141,3 +139,9 @@ void frida_loop() {
     frida_usbTask();
     frida_cliTask();
 }
+
+
+void frida_USBinterrupt(){
+	tud_int_handler(BOARD_TUD_RHPORT);
+}
+

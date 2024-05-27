@@ -498,7 +498,7 @@ int cmd_mkfs(int argc, char **argv)
      return -1;
   }
 
-  res = f_setlabel(DRIVE_LABEL_NAME);
+  res = f_setlabel(DRIVE_LABEL);
   if (res != FR_OK)
   {
      xfs_printf("failed setting label\r\n");

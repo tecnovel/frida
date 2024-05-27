@@ -8,5 +8,4 @@
 MODULE(1, cmd_proc)
 MODULE(1, mod_hello)
 MODULE(1, mod_file)
-MODULE(1, mod_debug)
 
