@@ -17,7 +17,9 @@
 */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "stm32h7xx_hal.h"
+#include "frida_conf.h"
+#ifdef USE_SD
+
 #include "main.h"
 /* Defines ------------------------------------------------------------------*/
 #define SD_PRESENT               ((uint8_t)0x01)  /* also in bsp_driver_sd.h */
@@ -26,3 +28,5 @@
 #define SD_DETECT_GPIO_PORT   GPIOI
 /* Prototypes ---------------------------------------------------------------*/
 uint8_t	BSP_PlatformIsDetected(void);
+
+#endif

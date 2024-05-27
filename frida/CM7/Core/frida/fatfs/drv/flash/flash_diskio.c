@@ -12,12 +12,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "frida_conf.h"
+#ifdef USE_FLASH
 
 #include "flash_diskio.h"
 #include "w25qxx.h"
 #include <string.h>
 
-#ifdef USE_FLASH
+
 
 #if defined ( __GNUC__ )
 #ifndef __weak
@@ -65,7 +66,7 @@ DSTATUS flash_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-	w25qxx_init(&flash, &FLASH_SPI, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
+	w25qxx_init(&flash, &FLASH_SPI, FLASH_CS_PORT, FLASH_CS_PIN);
 	return RES_OK;
 }
 

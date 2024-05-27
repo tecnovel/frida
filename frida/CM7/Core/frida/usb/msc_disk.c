@@ -12,22 +12,10 @@
 void fatfs_init(void) {
 
 	// Initialize the SD card
-	if(MEMORY_DRV.disk_initialize(0) != 0){
-		// If initialization fails, blink LED2 indefinitely
-		while(1){
-			HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
-			HAL_Delay(50);
-		}
-	}
+	if(MEMORY_DRV.disk_initialize(0) != 0)	Error_Handler();
 
 	// Mount the FATFS filesystem on the SD card
-	if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != 0){
-		// If mounting fails, blink LED3 indefinitely
-		while(1){
-			HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
-			HAL_Delay(50);
-		}
-	}
+	if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != 0) Error_Handler();
 }
 
 

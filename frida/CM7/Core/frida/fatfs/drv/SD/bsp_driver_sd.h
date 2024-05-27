@@ -26,6 +26,8 @@
  extern "C" {
 #endif
 
+#ifdef USE_SD
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "fatfs_platform.h"
@@ -78,6 +80,8 @@ void    BSP_SD_ReadCpltCallback(void);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif /* __STM32H7_SD_H */

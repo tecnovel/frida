@@ -10,6 +10,9 @@ extern "C" {
 #endif
 
 
+#include "frida_conf.h"
+#ifdef USE_FLASH
+
 #include "../../diskio.h"
 #include "../ff_gen_drv.h"
 
@@ -27,6 +30,8 @@ extern const Diskio_drvTypeDef  FLASH_Driver;
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif

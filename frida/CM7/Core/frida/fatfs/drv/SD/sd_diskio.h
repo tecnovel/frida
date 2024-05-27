@@ -17,7 +17,8 @@
   */
 /* USER CODE END Header */
 
-/* Note: code generation based on sd_diskio_dma_template.h */
+#include "frida_conf.h"
+#ifdef USE_SD
 
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __SD_DISKIO_H
@@ -40,3 +41,5 @@ extern const Diskio_drvTypeDef  SD_Driver;
 /* USER CODE END lastSection */
 
 #endif /* __SD_DISKIO_H */
+
+#endif

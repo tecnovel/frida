@@ -18,6 +18,9 @@
  ******************************************************************************
  */
 
+#include "frida_conf.h"
+#ifdef USE_FLASH
+
 #include "main.h"
 #include "w25qxx.h"
 #include <string.h>
@@ -350,3 +353,5 @@ W25QXX_result_t w25qxx_chip_erase(W25QXX_HandleTypeDef *w25qxx) {
 /*
  * vim: ts=4 et nowrap
  */
+
+#endif

@@ -104,12 +104,12 @@
 
 #if CFG_TUD_ENABLED && defined(TUP_USBIP_FSDEV)
 
-#include "device/dcd.h"
+#include "../../../device/dcd.h"
 
 #ifdef TUP_USBIP_FSDEV_STM32
   // Undefine to reduce the dependence on HAL
   #undef USE_HAL_DRIVER
-  #include "portable/st/stm32_fsdev/dcd_stm32_fsdev_pvt_st.h"
+  #include "../../../portable/st/stm32_fsdev/dcd_stm32_fsdev_pvt_st.h"
 #endif
 
 /*****************************************************

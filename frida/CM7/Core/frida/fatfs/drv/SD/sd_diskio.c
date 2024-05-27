@@ -24,6 +24,10 @@
 /* can be used to modify / undefine following code or add new definitions */
 /* USER CODE END firstSection*/
 
+#include "frida_conf.h"
+#ifdef USE_SD
+
+
 /* Includes ------------------------------------------------------------------*/
 #include "../ff_gen_drv.h"
 #include "sd_diskio.h"
@@ -517,3 +521,5 @@ void BSP_SD_ErrorCallback(void)
 /* USER CODE BEGIN lastSection */
 /* can be used to modify / undefine previous code or add new code */
 /* USER CODE END lastSection */
+
+#endif

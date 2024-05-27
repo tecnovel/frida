@@ -53,8 +53,6 @@
 
 extern struct mg_mgr mgr;
 extern struct mg_tcpip_if* s_ifp;
-extern SD_HandleTypeDef hsd1;
-
 
 void frida_init();
 void frida_loop();
