@@ -95,9 +95,10 @@ static int contains_whitespace(char *s)
 
 int cmd_ls(int argc, char **argv)
 {
-  CMD_HELP("[<path>]", "list files",
+  CLI_CMD_HELP("[<path>]", "list files",
            "The last segment of path may contain * as wildcard character\r\n"
   );
+  CLI_CMD_ASSERT_ARGC_LE(2);
 
   FRESULT res;
   DIR  dir;
@@ -173,7 +174,8 @@ int cmd_ls(int argc, char **argv)
 
 int cmd_cd(int argc, char **argv)
 {
-  CMD_HELP("[<dir>]", "change directory");
+  CLI_CMD_HELP("[<dir>]", "change directory");
+  CLI_CMD_ASSERT_ARGC_LE(2);
 
   FRESULT res;
   char    *path = (argc >1) ? argv[1] : "/";
@@ -189,7 +191,8 @@ int cmd_cd(int argc, char **argv)
 
 int cmd_pwd(int argc, char **argv)
 {
-  CMD_HELP("", "print working directoy");
+  CLI_CMD_HELP("", "print working directoy");
+  CLI_CMD_ASSERT_ARGC_EQ(1);
 
   FRESULT res;
   TCHAR   buff[256];
@@ -212,7 +215,8 @@ int cmd_pwd(int argc, char **argv)
 
 int cmd_cat(int argc, char **argv)
 {
-  CMD_HELP("<file>", "show ascii contents of <file>");
+  CLI_CMD_HELP("<file>", "show ascii contents of <file>");
+  CLI_CMD_ASSERT_ARGC_EQ(2);
 
   FIL     file;
   TCHAR   buff[LOAD_BUFF_LEN+1]; // add 1 char for termination
@@ -248,7 +252,8 @@ void mg_hexdump(const void *buf, size_t len);
 
 int cmd_hexdump(int argc, char **argv)
 {
-  CMD_HELP("<file>", "show hexdump of <file>");
+  CLI_CMD_HELP("<file>", "show hexdump of <file>");
+  CLI_CMD_ASSERT_ARGC_EQ(2);
 
   FIL     file;
   TCHAR   buff[LOAD_BUFF_LEN+1]; // add 1 char for termination
@@ -282,7 +287,8 @@ int cmd_hexdump(int argc, char **argv)
 
 int cmd_source(int argc, char **argv)
 {
-  CMD_HELP("<file>", "execute <file> as command script");
+  CLI_CMD_HELP("<file>", "execute <file> as command script");
+  CLI_CMD_ASSERT_ARGC_EQ(2);
 
   FIL     file;
   TCHAR   buff[LOAD_BUFF_LEN+1]; // add 1 char for termination
@@ -327,7 +333,7 @@ int cmd_source(int argc, char **argv)
               cmd_buff++;
             }
             if (DBG_INF1) xfs_printf("#> '%s'\r\n", cmd_buff);
-            cmd_process(cmd_buff, cmd_ptr);
+            cmd_process(cmd_buff);
           }
         }
         comment = 0;
@@ -361,7 +367,8 @@ int cmd_source(int argc, char **argv)
 
 int cmd_mkdir(int argc, char **argv)
 {
-  CMD_HELP("<dir>", "make directory");
+  CLI_CMD_HELP("<dir>", "make directory");
+  CLI_CMD_ASSERT_ARGC_EQ(2);
 
   FRESULT res;
 
@@ -376,7 +383,9 @@ int cmd_mkdir(int argc, char **argv)
 
 int cmd_rm(int argc, char **argv)
 {
-  CMD_HELP("<path>", "remove file or empty directory");
+  CLI_CMD_HELP("<path>", "remove file or empty directory");
+  CLI_CMD_ASSERT_ARGC_EQ(2);
+
 
   FRESULT res;
 
@@ -391,7 +400,8 @@ int cmd_rm(int argc, char **argv)
 
 int cmd_mv(int argc, char **argv)
 {
-  CMD_HELP("<old> <new>", "mv / rename file or directory");
+  CLI_CMD_HELP("<old> <new>", "mv / rename file or directory");
+  CLI_CMD_ASSERT_ARGC_EQ(3);
 
   FRESULT res;
   int exists_src,  exists_dst;
@@ -434,7 +444,8 @@ int cmd_mv(int argc, char **argv)
 
 int cmd_label(int argc, char **argv)
 {
-  CMD_HELP("[<new_label>]", "show or change label of disk");
+  CLI_CMD_HELP("[<new_label>]", "show or change label of disk");
+  CLI_CMD_ASSERT_ARGC_LE(2);
 
   FRESULT res;
   char  label[13];
@@ -459,7 +470,7 @@ int cmd_label(int argc, char **argv)
 static char mkfs_security_phrase[] = "ERASE-ALL";
 int cmd_mkfs(int argc, char **argv)
 {
-  CMD_HELP(mkfs_security_phrase, "format drive and erase all data");
+  CLI_CMD_HELP(mkfs_security_phrase, "format drive and erase all data");
 
   FRESULT res;
   char  buff[WORK_BUFF_LEN];
@@ -630,7 +641,8 @@ int check_redirection(char *s, char** str, char** fname)
 
 int cmd_echo_redir(int argc, char **argv)
 {
-  CMD_HELP("[<text>] [>[>][ ]<file>]", "display a line of text or write/append to file",
+	CMD_SPLIT_LIMIT(0); /* do not call split function in CMD_HELP macro */
+  CLI_CMD_HELP("[<text>] [>[>][ ]<file>]", "display a line of text or write/append to file",
            " >  creates a new file or overwrites !!! existing file\r\n"
            " >> creates a new file or appends to existing file\r\n"
            " when there is at least one space  between '>' and\r\n"
@@ -667,7 +679,8 @@ int cmd_echo_redir(int argc, char **argv)
 
 int cmd_cp(int argc, char **argv)
 {
-  CMD_HELP("<src> <dst>", "copy file <src> to <dst>");
+  CLI_CMD_HELP("<src> <dst>", "copy file <src> to <dst>");
+  CLI_CMD_ASSERT_ARGC_EQ(3);
 
   FRESULT res;
   FIL     fsrc;
@@ -744,7 +757,7 @@ int cmd_cp(int argc, char **argv)
 
 int mod_file_help(int argc, char **argv)
 {
-  CMD_HELP("","filesystem related commands");
+  CLI_CMD_HELP("","filesystem related commands");
   return 0;
 }
 
@@ -753,25 +766,25 @@ int mod_file_help(int argc, char **argv)
 
 cmd_table_entry_type cmd_table_mod_file[] =
 {
-  {0, "mod_file",  mod_file_help},  /* first entry is module name and help */
-  {1, "ls",        cmd_ls},
-  {1, "dir",       cmd_ls},
-  {1, "label",     cmd_label},
-  {1, "cd",        cmd_cd},
-  {0, "pwd",       cmd_pwd},
-  {2, "cp",        cmd_cp},
-  {2, "mv",        cmd_mv},
-  {2, "rename",    cmd_mv},
-  {1, "rm",        cmd_rm},
-  {1, "del",       cmd_rm},
-  {1, "cat",       cmd_cat},
-  {1, "hexdump",   cmd_hexdump},
-  {1, "echo",      cmd_echo_redir},
-  {1, "mkdir",     cmd_mkdir},
-  {1, "mkfs",      cmd_mkfs},
-  {1, "source",    cmd_source},
-  {1, ".",         cmd_source},
-  {0, 0, 0}
+  {"mod_file",  mod_file_help},  /* first entry is module name and help */
+  {"ls",        cmd_ls},
+  {"dir",       cmd_ls},
+  {"label",     cmd_label},
+  {"cd",        cmd_cd},
+  {"pwd",       cmd_pwd},
+  {"cp",        cmd_cp},
+  {"mv",        cmd_mv},
+  {"rename",    cmd_mv},
+  {"rm",        cmd_rm},
+  {"del",       cmd_rm},
+  {"cat",       cmd_cat},
+  {"hexdump",   cmd_hexdump},
+  {"echo",      cmd_echo_redir},
+  {"mkdir",     cmd_mkdir},
+  {"mkfs",      cmd_mkfs},
+  {"source",    cmd_source},
+  {".",         cmd_source},
+  {0}
 };
 
 /******************************************************************************/

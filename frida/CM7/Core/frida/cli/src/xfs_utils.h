@@ -48,28 +48,56 @@
 /******************************************************************************/
 /* function prototypes                                                        */
 /******************************************************************************/
-int xfs_atoi(const char *str);
-unsigned int xfs_atoui(const char *str);
+unsigned int  packed_bcd_to_dec(unsigned int pbcd);
+unsigned int  dec_to_packed_bcd(unsigned int dec);
+unsigned int  xfs_atoui(const char *str);
 unsigned long xfs_atoul(const char *str);
 
 void ncpy_c(char *cp1, const char *cp2, int len);
 int  ncmp(const char *cp1, const char *cp2, int len);
-int fstrpcmp(const char *cp1, const char *cp2);
+int  fstrpcmp(const char *cp1, const char *cp2);
 int  fstrcmp(const char *cp1, const char *cp2);
 int  fstricmp(const char *cp1, const char *cp2);
 int  fstrcmpwc(const char *cp1, const char *cp2);
 char *xfs_strchr(char * str, int character);
 void print_frame(unsigned char* fbuff, int len);
-int hex_val(char c);
-int hatoi(const char *str);
-int is_num(char c);
-unsigned int packed_bcd_to_dec(unsigned int pbcd);
-unsigned int dec_to_packed_bcd(unsigned int dec);
+int  hex_val(char c);
+int  hatoi(const char *str);
+int  is_num(char c);
+int xfs_atoi(const char *str);
+int  skip_whitespace(const char *s, int pos, int reverse);
 
-int skip_whitespace(const char *s, int pos, int reverse);
 
 /******************************************************************************/
 /* static inline functions                                                    */
+/******************************************************************************/
+
+static inline int fstrlen(const char *s)
+{
+  int i = 0;
+  while (s[i]) i++;
+  return i;
+}
+
+/******************************************************************************/
+
+static inline int fstrnlen(const char *s, int n)
+{
+  int i = 0;
+  while ((n-- > 0) && s[i]) i++;
+  return i;
+}
+
+
+/******************************************************************************/
+
+static inline char *fstrncpy(char *dest, const char *src, int n)
+{
+  while (n-- > 0) {*dest++ = *src; if (!*src++) break; }
+  return dest;
+}
+
+
 /******************************************************************************/
 
 #endif /* __XFS_UTILS_H__ */

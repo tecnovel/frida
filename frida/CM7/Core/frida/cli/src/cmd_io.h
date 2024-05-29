@@ -8,8 +8,12 @@
 #ifndef FRIDA_CLI_CMD_IO_H_
 #define FRIDA_CLI_CMD_IO_H_
 
-char* system_get_hostname(void);
-int system_getchar();
-void system_putchar(int c);
+char* sys_get_hostname(void);
+
+int sys_usb_getchar();
+void sys_usb_putchar(int c);
+
+void sys_net_putchar(int c);
+int sys_net_getchar();
 
 #endif /* FRIDA_CLI_CMD_IO_H_ */

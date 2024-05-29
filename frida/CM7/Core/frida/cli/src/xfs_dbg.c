@@ -19,10 +19,13 @@
 
 #include "xfs_dbg.h"
 #include "xfs_utils.h"
+#include "xfs_printf.h"
+#include "cmd_processor.h"
 
 /******************************************************************************/
 /* global vars                                                                */
 /******************************************************************************/
+#ifndef DBG_NONE
 
 unsigned int xfs_dbg_level = DBG_LEVEL_DEFAULT;
 unsigned int global_error_flag = 0;
@@ -88,5 +91,50 @@ void set_error_flag(unsigned int error_flag)
   global_error_flag |= error_flag;
 }
 
+/******************************************************************************/
+
+int cmd_dbg(int argc, char **argv)
+{
+  unsigned int d;
+
+  CLI_CMD_HELP("[<dbg_level>]","show or set debug level");
+
+  if ((argc>1) && (*argv[1]))
+  {
+    d = parse_dbglvl(argv[1]);
+    set_dbg_level(d);
+  }
+  d = get_dbg_level();
+  if (d > DBG_LEVEL_MAX) d = DBG_LEVEL_MAX;
+  xfs_printf("Debug level : %2d  (%s)\r\n", d, dbg_level_str[d]);
+
+  return 0;
+}
 
 /******************************************************************************/
+
+int mod_dbg_help(int argc, char **argv)
+{
+  int i;
+  CLI_CMD_HELP("","debug functions");
+
+
+  xfs_printf("\r\ndbg level\r\n");
+  for (i=0; i <=DBG_LEVEL_MAX; i++)
+  {
+    xfs_printf("%2d %s\r\n", i, dbg_level_str[i]);
+  }
+  return 0;
+}
+
+/******************************************************************************/
+
+cmd_table_entry_type cmd_table_mod_dbg[] =
+{
+  {"mod_dbg",    mod_dbg_help},
+  {"dbg",        cmd_dbg},
+  {0}
+};
+
+#endif /* DBG_NONE */
+

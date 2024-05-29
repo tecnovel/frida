@@ -14,7 +14,7 @@
 
 int mod_hello_help(int argc, char **argv)
 {
-  CMD_HELP("","example module ...");
+	CLI_CMD_HELP("","example module ...");
 
   xfs_printf("\r\nSpecific help for Module A...\r\n");
 
@@ -26,9 +26,9 @@ int mod_hello_help(int argc, char **argv)
 
 int cmd_echo(int argc, char **argv)
 {
-  CMD_HELP("<text>", "display a line of text");
+	CLI_CMD_HELP("<text>", "display a line of text");
 
-  if (argc < 2) return -1;
+  CLI_CMD_ASSERT_ARGC_EQ(2);
 
   xfs_printf("\n%s\r\n", argv[1]);
   return 0;
@@ -39,8 +39,8 @@ int cmd_echo(int argc, char **argv)
 
 cmd_table_entry_type cmd_table_mod_hello[] =
 {
-  {0, "mod_hello",      mod_hello_help},  /* first entry is module name and help */
-  {2, "echo",       	cmd_echo},
-  {0, 0,         		0}
+  {"mod_hello",      mod_hello_help},  /* first entry is module name and help */
+  {"echo",       	cmd_echo},
+  {0}
 };
 

@@ -15,7 +15,6 @@
 
 //cli
 #include "cli/src/term_cmd_input.h"
-#include "cli/src/cmd_proc_interface.h"
 #include "cli/src/cmd_processor.h"
 
 //fatfs

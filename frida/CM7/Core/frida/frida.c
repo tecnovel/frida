@@ -20,7 +20,10 @@ struct mg_mgr mgr;
   */
 struct mg_tcpip_if* s_ifp;
 
-term_cmd_input_type term_in;
+term_cmd_input_type cmd_input_usb;
+term_cmd_input_type cmd_input_net;
+xfs_term xfs_term_usb;
+xfs_term xfs_term_net;
 
 /**
   * @brief DHCP entries for IP address allocation.
@@ -98,8 +101,11 @@ void frida_init(void (*blink)(void *)) {
     fatfs_init();
     tud_init(BOARD_TUD_RHPORT);
 
-    cmd_proc_interface_init(system_putchar, system_getchar, system_get_hostname, HAL_Delay);
-    term_cmd_input_init(&term_in);
+    xfs_term_init(&xfs_term_usb,  sys_usb_putchar,  sys_usb_getchar);
+    term_cmd_input_init(&cmd_input_usb, &xfs_term_usb, sys_get_hostname, TERM_NEW_LINE);
+
+    xfs_term_init(&xfs_term_net,  sys_net_putchar,  sys_net_getchar);
+    term_cmd_input_init(&cmd_input_net, &xfs_term_net, sys_get_hostname, TERM_NEW_LINE);
 
     MG_INFO(("Init done, starting main loop ..."));
 }
@@ -124,9 +130,13 @@ void frida_usbTask() {
 
 
 void frida_cliTask() {
-	int len = term_cmd_input_get_cmd(&term_in);
+	int len = term_cmd_input_get_cmd(&cmd_input_usb);
 	if (len > 0)
-		cmd_process(term_in.command, len);
+		cmd_process(cmd_input_usb.command);
+
+	len = term_cmd_input_get_cmd(&cmd_input_net);
+		if (len > 0)
+			cmd_process(cmd_input_net.command);
 }
 
 /**

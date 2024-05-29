@@ -5,7 +5,63 @@
  *      Author: kaestli_a
  */
 
-#include "websrv/mongoose/mongoose.h"
+#include "eventHandler.h"
+
+static struct websocket_connection *ws_connections = NULL;
+
+void add_connection(struct mg_connection *conn) {
+  struct websocket_connection *new_conn = (struct websocket_connection *)malloc(sizeof(struct websocket_connection));
+  new_conn->conn = conn;
+  new_conn->next = ws_connections;
+  ws_connections = new_conn;
+}
+
+void remove_connection(struct mg_connection *conn) {
+  struct websocket_connection **current = &ws_connections;
+  while (*current) {
+    if ((*current)->conn == conn) {
+      struct websocket_connection *to_free = *current;
+      *current = (*current)->next;
+      free(to_free);
+      return;
+    }
+    current = &(*current)->next;
+  }
+}
+
+void broadcast_message(const char *message) {
+  struct websocket_connection *current = ws_connections;
+  while (current) {
+    mg_ws_send(current->conn, message, strlen(message), WEBSOCKET_OP_TEXT);
+    current = current->next;
+  }
+}
+
+#define BUFFER_SIZE 128
+char input_buffer[BUFFER_SIZE];
+int buffer_start = 0, buffer_end = 0;
+
+void buffer_push_char(char c) {
+    if ((buffer_end + 1) % BUFFER_SIZE != buffer_start) { // Check if buffer is not full
+        input_buffer[buffer_end] = c;
+        buffer_end = (buffer_end + 1) % BUFFER_SIZE;
+    }
+}
+
+int buffer_pop_char() {
+    int c = EOF;
+    if (buffer_start != buffer_end) {
+        c = input_buffer[buffer_start];
+        buffer_start = (buffer_start + 1) % BUFFER_SIZE;
+    }
+    return c;
+}
+
+void handle_websocket_message(struct mg_connection *c, struct mg_ws_message *wm) {
+    for (size_t i = 0; i < wm->data.len; i++) {
+        buffer_push_char(wm->data.ptr[i]);
+    }
+}
 
 
 // website handler
@@ -41,11 +97,19 @@ void fn(struct mg_connection *c, int ev, void *ev_data) {
 		}
 		break;
 	case MG_EV_WS_MSG:
-		struct mg_ws_message *wm = (struct mg_ws_message *) ev_data;
+		//struct mg_ws_message *wm = (struct mg_ws_message *) ev_data;
 		//mg_ws_send(c, wm->data.ptr, wm->data.len, WEBSOCKET_OP_TEXT);
-
-		if(strcmp(wm->data.ptr, "version") == 0){
+		handle_websocket_message(c, (struct mg_ws_message *) ev_data);
+		/*if(strcmp(wm->data.ptr, "version") == 0){
 			mg_ws_printf(c, WEBSOCKET_OP_TEXT, "{%m:%m}", MG_ESC("version"), MG_ESC("Version 1"));
-		}
+		}*/
+		break;
+	case MG_EV_WS_OPEN:
+		add_connection(c);
+		break;
+	case MG_EV_CLOSE:
+		remove_connection(c);
+		break;
+
   }
 }

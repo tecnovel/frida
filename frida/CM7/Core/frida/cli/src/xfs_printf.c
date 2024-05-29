@@ -38,6 +38,10 @@
 /*                                                                            */
 /******************************************************************************/
 
+#include "xfs_printf.h"
+
+#if (USE_STDIO==0)
+
 
 /******************************************************************************/
 /* Include Files                                                              */
@@ -45,10 +49,8 @@
 
 #include <stdarg.h>
 #include <ctype.h>
-#include <string.h>
+#include "xfs_utils.h"
 
-#include "xfs_printf.h"
-#include "cmd_proc_interface.h"
 
 /******************************************************************************/
 /* local constant definitions                                                 */
@@ -119,6 +121,64 @@ static char xfs_printf_global_buffer[XFS_PRINTF_GLOBAL_BUFFER_SIZE];
 static int  xfs_printf_global_buffer_pos = 0;
 
 
+static xfs_term  xfs_term_none = {0, 0};
+static xfs_term  *xfs_term_std = &xfs_term_none;
+
+/******************************************************************************/
+/*                                                                            */
+/* terminal init                                                              */
+/*                                                                            */
+/******************************************************************************/
+
+void xfs_term_init(xfs_term* self, xfs_term_putchar fct_putchar, xfs_term_getchar fct_getchar)
+{
+  self->putchar   = fct_putchar;
+  self->getchar   = fct_getchar;
+  if (xfs_term_std == &xfs_term_none) xfs_term_std =self;
+}
+
+
+/******************************************************************************/
+/*                                                                            */
+/* xfs_term_set_std                                                           */
+/*                                                                            */
+/******************************************************************************/
+
+void xfs_term_set_std(xfs_term* std)
+{
+  xfs_term_std = std;
+}
+
+
+/******************************************************************************/
+/*                                                                            */
+/* xfs_getchar                                                                */
+/*                                                                            */
+/******************************************************************************/
+
+int xfs_getchar(void)
+{
+  return (xfs_term_std->getchar) ? xfs_term_std->getchar() : XFS_EOF;
+}
+
+
+/******************************************************************************/
+/*                                                                            */
+/*  do format string conversion with given arguments                          */
+/*                                                                            */
+/******************************************************************************/
+
+#ifdef EXTERNAL_VXPRINTF
+
+size_t EXTERNAL_VXPRINTF(void (*)(char, void *), void *, const char *fmt, va_list *);
+
+int xfs_convert_format(xfs_printf_char_callback_type char_callback_func, void *char_callback_opt, const char *format, va_list argp)
+{
+  return EXTERNAL_VXPRINTF(char_callback_func, char_callback_opt, format, &argp);
+}
+
+#else
+
 /******************************************************************************/
 /*                                                                            */
 /* generate padding characters                                                */
@@ -148,8 +208,8 @@ static void xfs_write_string(char *lp, xfs_printf_conv_type *conv_ptr)
 {
   int len;
 
-  if (conv_ptr->flags & FLAG_PREC) len = strlen (lp) < conv_ptr->precision ? strlen (lp) : conv_ptr->precision;
-  else len = strlen(lp);
+  if (conv_ptr->flags & FLAG_PREC) len = fstrnlen(lp, conv_ptr->precision);
+  else len = fstrlen(lp);
   conv_ptr->arg_str_len = len;
 
   /* pad on left if needed */
@@ -184,7 +244,6 @@ static void xfs_write_num(const long n, const long radix, xfs_printf_conv_type *
   int prepend_chars = 0;
   int num_chars     = 0;
   int leading_zeros = 0;
-  int d;
 
   if (radix == 10)
   {
@@ -221,7 +280,7 @@ static void xfs_write_num(const long n, const long radix, xfs_printf_conv_type *
   /* Build number (backwards) in tmpbuf */
   if (num || !(conv_ptr->flags & FLAG_PREC)) do
   {
-    d = num % radix;
+    int d = num % radix;
     tmpbuf[num_chars++] = (conv_ptr->flags & FLAG_UPPER) ? toupper(digits[d]) : digits[d];
   } while ((num /= radix) > 0);
 
@@ -323,7 +382,7 @@ int xfs_convert_format(xfs_printf_char_callback_type char_callback_func, void *c
 
       for (cp++; *cp; cp++)  /* loop until end of format control */
       {
-        if (isdigit(*cp) || (*cp=='*'))
+        if (isdigit((int)*cp) || (*cp=='*'))
         {
           if (conv_ptr->flags & FLAG_PREC)
           {
@@ -448,6 +507,8 @@ int xfs_convert_format(xfs_printf_char_callback_type char_callback_func, void *c
   return (conv_ptr->total_len);
 }
 
+#endif // EXTERNAL_VXPRINTF
+
 
 /******************************************************************************/
 /*                                                                            */
@@ -499,7 +560,24 @@ int xfs_snprintf(char *buffer, int buffer_size, const char *format, ...)
 
 void xfs_print_char(char c, void *opt_ptr)
 {
-  cmd_proc_interface_putchar(c);
+  if (!xfs_term_std->putchar) return;
+
+#if XFS_PRINT_CHAR_CONV_LF_TO_CRLF
+  if (c=='\n') xfs_term_std->putchar('\r');
+#endif
+  xfs_term_std->putchar(c);
+}
+
+
+/******************************************************************************/
+/*                                                                            */
+/* xfs_putchar                                                                */
+/*                                                                            */
+/******************************************************************************/
+
+void xfs_putchar(int c)
+{
+  xfs_print_char(c, 0);
 }
 
 
@@ -677,7 +755,7 @@ void xfs_print(const char *s)
   }
   else if (xfs_printf_call_callback)
   {
-    xfs_printf_call_callback(s, strlen(s), xfs_printf_custom_opt_ptr);
+    xfs_printf_call_callback(s, fstrlen(s), xfs_printf_custom_opt_ptr);
   }
   else if (xfs_printf_char_callback)
   {
@@ -697,15 +775,15 @@ int xfs_printf(const char *format, ...)
 {
   int len;
   char local_buffer[XFS_PRINTF_BUFFER_SIZE];
-  int  local_buffer_len = 0;
   xfs_buffer_char_opt_type buffer_char_opt;
   xfs_buffer_char_opt_type *callback_char_opt;
   va_list argp;
 
+  buffer_char_opt.buffer_pos = 0;
 
   if (xfs_printf_line_callback)
   {
-    callback_char_opt = NULL;
+    callback_char_opt = (void*)0;
   }
   else if (xfs_printf_call_callback)
   {
@@ -725,14 +803,15 @@ int xfs_printf(const char *format, ...)
 
   if (xfs_printf_call_callback)
   {
-    local_buffer_len = buffer_char_opt.buffer_pos;
-    local_buffer[local_buffer_len] = 0;
-    xfs_printf_call_callback(local_buffer, local_buffer_len, xfs_printf_custom_opt_ptr);
+    local_buffer[buffer_char_opt.buffer_pos] = 0;
+    xfs_printf_call_callback(local_buffer, buffer_char_opt.buffer_pos, xfs_printf_custom_opt_ptr);
   }
 
   return len;
 }
 
 
+#endif /* USE_STDIO */
+
 /******************************************************************************/
-/******************************************************************************/
+

@@ -85,7 +85,7 @@ int ncmp(const char *cp1, const char *cp2, int len)
 {
  int i;
 
- if (!cp1 | !cp2) return 0;
+ if (!cp1 || !cp2) return 0;
 
  for (i=0; i<len; i++)
  {
@@ -102,10 +102,10 @@ int fstrpcmp(const char *cp1, const char *cp2)
 {
   int i=0;
 
-  if (!cp1 | !cp2) return 0;
+  if (!cp1 || !cp2) return 0;
   while(1)
   {
-     if(cp1[i] == 0) return 1;
+     if(cp1[i] == 0) return i;        /* return  matched length */
      if(cp1[i] != cp2[i]) return 0;
      i++;
   }
@@ -118,29 +118,32 @@ int fstrcmp(const char *cp1, const char *cp2)
 {
   int i=0;
 
-  if (!cp1 | !cp2) return 0;
+  if (!cp1 || !cp2) return 0;
 
   while(1)
   {
      if(cp1[i] != cp2[i]) return 0;
-     if(cp1[i] == 0) return 1;
+     if(cp1[i] == 0) return i;    /* return  matched length */
      i++;
   }
 }
+
 /******************************************************************************/
 
+/* ignore case */
 int fstricmp(const char *cp1, const char *cp2)
 {
   int i=0;
 
-  if (!cp1 | !cp2) return 0;
+  if (!cp1 || !cp2) return 0;
   while(1)
   {
      if (tolower((int)(cp1[i])) != tolower((int)(cp2[i]))) return 0;
-     if (cp1[i] == 0) return 1;
+     if (cp1[i] == 0) return i;     /* return  matched length */
      i++;
   }
 }
+
 /******************************************************************************/
 
 /* wildcard compare
@@ -154,12 +157,13 @@ int fstrcmpwc(const char *cp1, const char *cp2)
 {
   int i=0;
 
-  if (!cp1 | !cp2) return 0;
+  if (!cp1 || !cp2) return 0;
+
   while(1)
   {
-     if((cp1[i] == '*') || (cp2[i] == '*')) return 1;
+     if((cp1[i] == '*') || (cp2[i] == '*')) return i;   /* return  matched length */
      if(cp1[i] != cp2[i]) return 0;
-     if(cp1[i] == 0) return 1;
+     if(cp1[i] == 0) return i;     /* return  matched length */
      i++;
   }
 }
@@ -224,11 +228,10 @@ int hex_val(char c)
 int hatoi(const char *str)
 {
   int val = 0;
-  int digit;
 
   while(*str && (*str != ':'))
   {
-    digit = hex_val(*str++);
+    int digit = hex_val(*str++);
     if (digit<0) return 0;
     val = val*16 + digit;
   }
@@ -258,11 +261,10 @@ unsigned int packed_bcd_to_dec(unsigned int pbcd)
 {
   unsigned int dec  = 0;
   unsigned int base = 1;
-  unsigned int digit;
 
   while(pbcd > 0)
   {
-    digit = (pbcd % 16);
+    unsigned int digit = (pbcd % 16);
     if (digit > 9) digit = 9;
     dec  += base * digit;
     base *= 10;
@@ -271,7 +273,6 @@ unsigned int packed_bcd_to_dec(unsigned int pbcd)
   return dec;
 }
 
-/******************************************************************************/
 
 /******************************************************************************/
 

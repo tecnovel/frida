@@ -1,54 +1,53 @@
-/*-------------------------------------------------------------------------------------
+/*******************************************************************************
  *  Paul Scherrer Institut
- *-------------------------------------------------------------------------------------
+ *------------------------------------------------------------------------------
  *
- *  Project :  WaveDream2
+ *  Project :  generic
  *
  *  Author  :  schmid_e, theidel
  *  Created :  02.05.2014 13:24:35
  *
- *  Description :  Processing the commands entered via the terminal command line
- *                 using the modular command implementation.
+ *  Changes :  2022-11-01 major update by tg32
  *
- *-------------------------------------------------------------------------------------
- *-------------------------------------------------------------------------------------
- */
+ *  Description :  Processing the commands entered via the terminal
+ *                 command line using the modular command implementation.
+ *
+ ******************************************************************************/
 
-/******************************************************************************/
-/* include files                                                              */
-/******************************************************************************/
+
+/*******************************************************************************
+ * include files
+ ******************************************************************************/
 
 #include "cmd_processor.h"
+#include "term_cmd_input.h"
 #include "xfs_printf.h"
 #include "xfs_utils.h"
-#include <string.h>
 #include "xfs_dbg.h"
 
 
-/******************************************************************************/
-/* global vars                                                                */
-/******************************************************************************/
-
-const char* cmd_proc_help_par;
-const char* cmd_proc_help_short;
-const char* cmd_proc_help_long;
-
-/******************************************************************************/
-/* function definitions                                                       */
-/******************************************************************************/
+/*******************************************************************************
+ * global vars
+ ******************************************************************************/
 
 
-/******************************************************************************/
-/* len can be set < 0 if string is null terminated
+const int cmd_proc_arg_split_limit = (CLI_MAX_ARG_COUNT-1);
+
+/*******************************************************************************
+ * function definitions
+ ******************************************************************************/
+
+
+/*******************************************************************************
+ * string MUST be null terminated !!!
  * last arguments contains remainder (if any) with quoting and spaces unchanged
  * overwrites input string!
  */
 
-int cmd_proc_split_args(char *line, int len, unsigned int max_args, int *argc_ptr, char **argv_ptr)
+int cmd_proc_split_args(char *line, int max_args, char **argv_ptr)
 {
-  unsigned int i;
-  char c;
-  int idx = 0;
+  int i;
+  int argc   = 0;
   int squote = 0;
   int dquote = 0;
   int ignore_quotes = 0;
@@ -56,52 +55,75 @@ int cmd_proc_split_args(char *line, int len, unsigned int max_args, int *argc_pt
   char *args = line;
 
   /* initialize args */
-  for(i=0; i < max_args; i++) argv_ptr[i] = NULL;
-  *argc_ptr = 0;
+  for (i=0; i < max_args; i++) argv_ptr[i] = 0;
 
-  while(((idx<len) || (len<0)) && line[idx] && (line[idx]!=0x0a) && (line[idx]!=0x0d))
+  for (i=0; line[i] && (line[i] != 0x0a) && (line[i] != 0x0d); i++)
   {
-    c = line[idx++];
 
-    if ((c=='\'') && (!dquote) && (!ignore_quotes))
+    if ((line[i]=='\'') && (!dquote) && (!ignore_quotes))
     {
       squote = !squote;
     }
-    else if ((c=='"') && (!squote) && (!ignore_quotes))
+    else if ((line[i]=='"') && (!squote) && (!ignore_quotes))
     {
       dquote = !dquote;
     }
-    else if (((c==0x09) || (c==0x20)) && (!squote) && (!dquote))
+    else if (((line[i]==0x09) || (line[i]==0x20)) && (!squote) && (!dquote))
     {
       /* unquoted whitespace */
       *args++ = 0x00;
       start_new_arg = 1;
       /* do not change quotes for last argument */
-      if (*argc_ptr == (int)max_args-1) ignore_quotes=1;
+      if (argc == max_args-1) ignore_quotes=1;
     }
     else /* no whitespace or within quotes */
     {
       if (start_new_arg)
       {
-        if (*argc_ptr < (int)max_args-1)
+        if (argc < max_args-1)
         {
-          argv_ptr[(*argc_ptr)++] = args;
+          argv_ptr[argc++] = args;
         }
         else
         {
-          argv_ptr[(*argc_ptr)++] = &line[--idx];
-          return idx;
+          argv_ptr[argc++] = &line[i];
+          return argc;
         }
         start_new_arg = 0;
       }
-      *args++ = c;
+      *args++ = line[i];
     }
   }
 
-  *args = 0x00;
-
-  return idx;
+  *args = 0x00; /* ensure that last arg is null terminated */
+  return argc;
 }
+
+
+/******************************************************************************/
+
+void cmd_proc_shift_args(int *argc, char **argv, int start, int shift, int max_args)
+{
+  int i, s;
+
+  for (s=0; s<shift; s++) // iterate through shift because last argv{} may contain unsplit elements
+  {
+    int end = (*argc-2);
+    for (i = start; i <= end; i++) argv[i] = argv[i + 1];
+
+    if (*argc == max_args)
+    {
+      *argc = cmd_proc_split_args(argv[end], max_args-end, &argv[end]) + end;
+    }
+    else
+    {
+      *argc = (*argc > 0) ? (*argc - 1) : 0 ;
+    }
+
+  }
+  for (i = *argc; i < max_args; i++) argv[i] =0; // empty arguments
+}
+
 
 /******************************************************************************/
 
@@ -115,47 +137,73 @@ void cmd_proc_arg_info(int argc, char *argv[])
   }
 }
 
+
 /******************************************************************************/
 
-int cmd_process(char *buffer_i, unsigned int len)
+char* cmd_proc_remove_comment(char *s)
 {
-  char *argv[MAX_ARG_COUNT];
+  int  dquote  = 0;
+  int  squote  = 0;
+  int  start;
+  int  end;
+  int  i;
+
+  for (i=0; s[i] && (s[i] != 0x0a) && (s[i] != 0x0d); i++)
+  {
+    if      ((s[i]=='\'')  && (!dquote)) squote = !squote;
+    else if ((s[i]=='"')   && (!squote)) dquote = !dquote;
+    else if ((s[i] == '#') && (!dquote)  && (!squote)) break;
+  }
+
+  start = skip_whitespace(s, 0,   0);
+  end   = skip_whitespace(s, i-1, 1);
+
+  if (end < start)
+  {
+    s[0] = 0;
+    return s;
+  }
+
+  if (((s[start]=='"' && s[end]=='"') || (s[start]=='\'' && s[end]=='\'')))
+  {
+    end   = skip_whitespace(s, end-1, 1);
+    start = skip_whitespace(s, start+1, 0);
+  }
+  s[end+1] = 0;
+  return s+start;
+}
+
+
+/******************************************************************************/
+
+int cmd_process(char *cmd)
+{
+  char *argv[CLI_MAX_ARG_COUNT];
   int argc;
-  unsigned int idx;
-  int arg_limit;
   cmd_table_entry_type **cmd_list_ptr;
   cmd_table_entry_type *cmd_ptr;
 
+  cmd = cmd_proc_remove_comment(cmd);
+  if (!cmd[0]) return -1;
+
   /* first split in 2 parts for seperating command only */
-  idx = cmd_proc_split_args(buffer_i, len, 2, &argc, argv);
+  argc = cmd_proc_split_args(cmd, 2, argv);
   if (DBG_ALL) cmd_proc_arg_info(argc, argv);
 
   for (cmd_list_ptr = cmd_list; *cmd_list_ptr; cmd_list_ptr++)
   {
-    for (cmd_ptr = *cmd_list_ptr; cmd_ptr->cmd_name != NULL; cmd_ptr++)
+    for (cmd_ptr = *cmd_list_ptr; cmd_ptr->cmd_name != 0; cmd_ptr++)
     {
       if( fstrcmp(argv[0], cmd_ptr->cmd_name) )
       {
-        /* 0 means no limit, i.e. set to MAX */
-        arg_limit = cmd_ptr->arg_limit ? cmd_ptr->arg_limit : MAX_ARG_COUNT;
-
-        if ((argc > 1) && (arg_limit>argc) && (idx<len))
-        {
-          /* split other arguments */
-          cmd_proc_split_args(argv[1], len-idx, MAX_ARG_COUNT-1, &argc, argv+1);
-          argc++;
-        }
         if (DBG_ALL) cmd_proc_arg_info(argc, argv);
-        cmd_ptr->cmd_func_ptr(argc, argv);
-        return 0;
+        return cmd_ptr->cmd_func_ptr(argc, argv);
       }
     }
   }
 
   xfs_printf("E%02X: Unknown Command: %s\r\n", ERR_UNKNOWN_CMD, argv[0]);
-
-  return 0;
-
+  return -1;
 }
 
 
@@ -188,8 +236,10 @@ int cmd_proc_help(int argc, char **argv)
 {
   cmd_table_entry_type **cmd_list_ptr;
   cmd_table_entry_type *cmd_ptr;
-  char help_arg[] = "-?";
-  char *help_argv[2] = {help_arg, help_arg};
+  char *help_argv[3]; /* pointer for help strings set by the called cmd function: */
+                      /* help_argv[0] used for parameter help                     */
+                      /* help_argv[1] used for short help                         */
+                      /* help_argv[2] used for long help                          */
   char fmt_str[40];
   int get_len;
   int do_get_len = 1;
@@ -206,17 +256,20 @@ int cmd_proc_help(int argc, char **argv)
   unsigned int module;
   unsigned int cmd_sel_match;
   unsigned int list_mod_funcs = 0;
-  char *cmd_sel = NULL;
+  char *cmd_sel = 0;
   char *cp;
+  const char seperator_line[] = "-------------------------------------------------------------------------------------------------------------------------------";
 
-  CMD_HELP("[-a|-s|-c] [<cmd>|<module>]", "help for all or specified commands or modules",
+  CLI_CMD_HELP("[-s|-c] [<cmd>|<module>] | -a | -h", "help for all or specified commands or modules",
            "  []        optional arguments\r\n"
            "  |         alternative arguments\r\n"
            "  -a        list all modules and commands\r\n"
            "  -s        short description only\r\n"
            "  -c        show command name only\r\n"
            "  <cmd>     command name (may end with * as wildcard)\r\n"
-           "  <module>  module name (may end with * as wildcard)\r\n"
+           "\r\n"
+           "most commands can also be called with '-h' as last argument to show\r\n"
+           "command specific help, e.g. printenv -h\r\n"
           );
 
   if (argc > 1)
@@ -244,7 +297,6 @@ int cmd_proc_help(int argc, char **argv)
     }
   }
 
-
   if (argc==1) xfs_printf("List of available modules:\r\n\r\n");
   for (get_len = do_get_len; get_len >= 0; get_len--)
   {
@@ -257,26 +309,21 @@ int cmd_proc_help(int argc, char **argv)
         cmd_sel_match = fstrcmpwc(cmd_sel, cmd_ptr->cmd_name);
         if (module && ( cmd_sel_match || cmd_all|| !cmd_sel))
         {
-
-          cmd_ptr->cmd_func_ptr(2, help_argv);
+          cmd_ptr->cmd_func_ptr(CMD_PROG_ARGC_HELP_CALL, help_argv);
           if (!cmd_only)
           {
             if (get_len)
             {
-              cmd_len = strlen(cmd_ptr->cmd_name) + 1;  /* * in front of module nbame */
-              par_len = 7; /* strlen("*module"); */
+              cmd_len = fstrlen(cmd_ptr->cmd_name) + 1;  /* * in front of module name */
               if (cmd_len > max_cmd_len) max_cmd_len = cmd_len;
-              if (par_len > max_par_len) max_par_len = par_len;
             }
             else
             {
-
               if (cmd_all) xfs_printf("\r\n\r\n");
-              xfs_snprintf(fmt_str, sizeof(fmt_str), "%%-%ds  %%-%ds  %%s\r\n", max_cmd_len, max_par_len);
-              mod_len = xfs_printf(fmt_str, cmd_ptr->cmd_name,"*module", cmd_proc_help_short);
+              xfs_snprintf(fmt_str, sizeof(fmt_str), "%%-%ds  %%-%ds   %%s\r\n", max_cmd_len, max_par_len);
+              mod_len = xfs_printf(fmt_str, cmd_ptr->cmd_name, "", help_argv[1]);
               xfs_snprintf(fmt_str, sizeof(fmt_str), "%%.%ds\r\n", mod_len-2);
-              if (cmd_all) xfs_printf(fmt_str,"-------------------------------------------------------------------------------------------------------------------------------");
-
+              if (cmd_all) xfs_printf(fmt_str, seperator_line); //----------------------------------------
             }
           }
           /* list functions only without wildcard match*/
@@ -284,32 +331,30 @@ int cmd_proc_help(int argc, char **argv)
         }
         else if ((cmd_all) || (list_mod_funcs) || cmd_sel_match )
         {
-          cmd_proc_help_par   = "";
-          cmd_proc_help_short = "";
-          cmd_ptr->cmd_func_ptr(2, help_argv);
+          cmd_ptr->cmd_func_ptr(CMD_PROG_ARGC_HELP_CALL, help_argv);
 
           if (get_len)
           {
-            cmd_len = strlen(cmd_ptr->cmd_name);
-            par_len = strlen(cmd_proc_help_par);
+            cmd_len = fstrlen(cmd_ptr->cmd_name);
+            par_len = fstrlen(help_argv[0]);
             if (cmd_len > max_cmd_len) max_cmd_len = cmd_len;
             if (par_len > max_par_len) max_par_len = par_len;
           }
           else
           {
-            if(cmd_only)
+            if (cmd_only)
             {
               xfs_printf("%s\r\n", cmd_ptr->cmd_name);
             }
             else
             {
-              xfs_snprintf(fmt_str, sizeof(fmt_str), "%%-%ds  %%-%ds  %%s\r\n", max_cmd_len, max_par_len);
-              xfs_printf(fmt_str, cmd_ptr->cmd_name, cmd_proc_help_par, cmd_proc_help_short);
+              xfs_snprintf(fmt_str, sizeof(fmt_str), "%%-%ds %%-%ds  # %%s\r\n", max_cmd_len, max_par_len);
+              xfs_printf(fmt_str, cmd_ptr->cmd_name, help_argv[0], help_argv[1]);
             }
 
-            if ((cmd_sel) && (!list_mod_funcs) && (cmd_proc_help_long) && (!short_only)  && (!cmd_only))
+            if ((cmd_sel) && (!list_mod_funcs) && (help_argv[2]) && (!short_only)  && (!cmd_only))
             {
-               cmd_proc_print_long_help(cmd_proc_help_long);
+               cmd_proc_print_long_help(help_argv[2]);
             }
           }
         }
@@ -317,7 +362,11 @@ int cmd_proc_help(int argc, char **argv)
       }
     }
   }
-  if (argc==1) xfs_printf("\r\nuse 'help <module>' or 'help <cmd>' or 'help help' for more information\r\n");
+  if (argc==1)
+  {
+    xfs_printf("\r\nuse 'help <module>' or 'help <cmd>' or 'help help' for more information\r\n");
+    xfs_printf("    '<cmd> -h' with '-h' as last argument is also accepted by most commands\r\n\r\n");
+  }
 
   return 0;
 }
@@ -327,10 +376,28 @@ int cmd_proc_help(int argc, char **argv)
 
 int module_cmd_proc(int argc, char **argv)
 {
-  CMD_HELP("","cmd processor");
+  CLI_CMD_HELP("","cmd processor");
   return 0;
-
 }
+
+/******************************************************************************/
+
+int cli_cmd_history(int argc, char **argv)
+{
+  CLI_CMD_HELP("","cmd history");
+  int i;
+
+  if (!cli_current_interface) return 0;
+
+  for (i = cli_cmd_history_entries(cli_current_interface) - 1; i >= 0; i--)
+  {
+    xfs_local_printf("[%d] = %s\r\n", i, cli_cmd_history_get(cli_current_interface, i) );
+  }
+
+  return 0;
+}
+
+
 
 /************************************************************/
 /* COMMAND TABLE                                            */
@@ -338,9 +405,10 @@ int module_cmd_proc(int argc, char **argv)
 
 cmd_table_entry_type cmd_table_cmd_proc[] =
 {
-  {0, "cmd",        module_cmd_proc},
-  {0, "help",       cmd_proc_help},
-  {0, NULL, NULL}
+  {"cmd",     module_cmd_proc},
+  {"help",    cmd_proc_help},
+  {"history", cli_cmd_history},
+  {0}
 };
 
 

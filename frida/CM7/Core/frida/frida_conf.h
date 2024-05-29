@@ -11,7 +11,6 @@
 #include "usb/TinyUSB/tusb_option.h"
 
 
-
 /*
  * webserver settings
  */
