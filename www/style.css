@@ -1,0 +1,102 @@
+::selection {
+background: #FF5E99;
+}
+html, body {
+width: 100%;
+height: 100%;
+margin: 0;
+}
+body {
+font-size: 11pt;
+font-family: monospace;
+color: white;
+background-color: black;
+}
+#container {
+padding: .1em 1.5em 1em 1.5em;
+overflow-y: auto;
+height: 400px;
+
+border: 3px solid #333;
+}
+#container output {
+clear: both;
+width: 100%;
+}
+
+#container output pre {
+margin: 0;
+}
+
+header {
+text-align: center;
+font-size: 12pt;
+font-family: Mina;
+color: white;
+background-color: black;
+padding: .5em 0;
+}
+
+footer {
+position: fixed;
+bottom: 0;
+width: 100%;
+text-align: center;
+font-size: 10pt;
+font-family: Mina;
+color: white;
+background-color: black;
+padding: .5em 0;
+}
+
+
+/* blinking cursor */
+#cursor {
+background: lime;
+animation: blink 0.8s infinite;
+width: 2px;
+height: 14px;
+margin-bottom: 2px;
+}
+
+@keyframes blink {
+0% {background: transparent}
+50% {background: #00d111}
+100% {background: transparent}
+}
+
+#cmdline {
+
+letter-spacing: 2px;
+outline: none;
+background-color: transparent;
+margin: 0;
+width: 100%;
+font: inherit;
+border: none;
+color: inherit;
+white-space: pre-wrap;
+line-height: 1;
+}
+
+#cmdline #cmdline_pre {
+float: left;
+margin-right: -2px;
+}
+
+#cursor {
+float: left;
+}
+
+#cmdline #cmdline_after {
+overflow: hidden;
+}
+
+#history {
+    padding-top: 10px;
+    letter-spacing: 2px;
+    font-family: monospace;
+    font-size: 11pt;
+    line-height: 1;
+}
+
