@@ -56,9 +56,9 @@ extern struct mg_tcpip_if* s_ifp;
 void frida_init();
 void frida_loop();
 
-void frida_srvTask();
-void frida_usbTask();
-void frida_cliTask();
+void frida_srvTask(void *argument);
+void frida_usbTask(void *argument);
+void frida_cliTask(void *argument);
 
 void frida_USBinterrupt();
 

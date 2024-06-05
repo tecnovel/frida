@@ -71,43 +71,49 @@ bool dns_query_proc(const char *name, uint32_t *addr) {
   * @retval None
   */
 void frida_init(void (*blink)(void *)) {
-    MX_FATFS_Init();
-    mg_mgr_init(&mgr);        // Initialise Mongoose event manager
 
-    MG_INFO(("Init TCP/IP stack ..."));
-    static struct mg_tcpip_driver driver = {.tx = usb_tx, .up = usb_up};
-    static struct mg_tcpip_if mif = {.mac = MAC_ADDRESS,
-                                     .ip = IP_ADDRESS,
-                                     .mask = IP_NETMASK,
-                                     .gw = IP_GATEWAY,
-                                     .driver = &driver,
-                                     .recv_queue.size = 4096};
-
-    s_ifp = &mif;
-
-    mg_tcpip_init(&mgr, &mif);
-
-    dhserv_init(&mgr, &dhcp_config);
-    dnserv_init(&mgr, dns_query_proc);
-
-    mg_http_listen(&mgr, "http://0.0.0.0:80", fn, &mgr);
-    if(blink != NULL){
-    	mg_timer_add(&mgr, 500, MG_TIMER_REPEAT, blink, &mgr);
-    }
-
-    MG_INFO(("Init USB ..."));
+//    MX_FATFS_Init();
+//    mg_mgr_init(&mgr);        // Initialise Mongoose event manager
+//
+//    MG_INFO(("Init TCP/IP stack ..."));
+//    static struct mg_tcpip_driver driver = {.tx = usb_tx, .up = usb_up};
+//    static struct mg_tcpip_if mif = {.mac = MAC_ADDRESS,
+//                                     .ip = IP_ADDRESS,
+//                                     .mask = IP_NETMASK,
+//                                     .gw = IP_GATEWAY,
+//                                     .driver = &driver,
+//                                     .recv_queue.size = 4096};
+//
+//    s_ifp = &mif;
+//
+//    mg_tcpip_init(&mgr, &mif);
+//
+//    dhserv_init(&mgr, &dhcp_config);
+//    dnserv_init(&mgr, dns_query_proc);
+//
+//    mg_http_listen(&mgr, "http://0.0.0.0:80", fn, &mgr);
+//    if(blink != NULL){
+//    	mg_timer_add(&mgr, 500, MG_TIMER_REPEAT, blink, &mgr);
+//    }
+//
+//    MG_INFO(("Init USB ..."));
     init_tud_network_mac_address();
-
-    fatfs_init();
+//
+//    fatfs_init();
     tud_init(BOARD_TUD_RHPORT);
+//
+//    xfs_term_init(&xfs_term_usb,  sys_usb_putchar,  sys_usb_getchar);
+//    term_cmd_input_init(&cmd_input_usb, &xfs_term_usb, sys_get_hostname, TERM_NEW_LINE);
+//
+//    xfs_term_init(&xfs_term_net,  sys_net_putchar,  sys_net_getchar);
+//    term_cmd_input_init(&cmd_input_net, &xfs_term_net, sys_get_hostname, TERM_NEW_LINE);
+//
+//    MG_INFO(("Init done, starting main loop ..."));
 
-    xfs_term_init(&xfs_term_usb,  sys_usb_putchar,  sys_usb_getchar);
-    term_cmd_input_init(&cmd_input_usb, &xfs_term_usb, sys_get_hostname, TERM_NEW_LINE);
 
-    xfs_term_init(&xfs_term_net,  sys_net_putchar,  sys_net_getchar);
-    term_cmd_input_init(&cmd_input_net, &xfs_term_net, sys_get_hostname, TERM_NEW_LINE);
 
-    MG_INFO(("Init done, starting main loop ..."));
+
+
 }
 
 /**
@@ -115,8 +121,10 @@ void frida_init(void (*blink)(void *)) {
   * @note This function polls the Mongoose event manager for server operations.
   * @retval None
   */
-void frida_srvTask() {
-    mg_mgr_poll(&mgr, 1000);
+void frida_srvTask(void *argument) {
+	while (1){
+		mg_mgr_poll(&mgr, 1000);
+	}
 }
 
 /**
@@ -124,19 +132,23 @@ void frida_srvTask() {
   * @note This function handles USB tasks.
   * @retval None
   */
-void frida_usbTask() {
-    tud_task();
+void frida_usbTask(void *argument) {
+	while (1){
+		tud_task();
+	}
 }
 
 
-void frida_cliTask() {
-	int len = term_cmd_input_get_cmd(&cmd_input_usb);
-	if (len > 0)
-		cmd_process(cmd_input_usb.command);
-
-	len = term_cmd_input_get_cmd(&cmd_input_net);
+void frida_cliTask(void *argument) {
+	while (1){
+		int len = term_cmd_input_get_cmd(&cmd_input_usb);
 		if (len > 0)
-			cmd_process(cmd_input_net.command);
+			cmd_process(cmd_input_usb.command);
+
+		len = term_cmd_input_get_cmd(&cmd_input_net);
+			if (len > 0)
+				cmd_process(cmd_input_net.command);
+	}
 }
 
 /**
@@ -145,9 +157,9 @@ void frida_cliTask() {
   * @retval None
   */
 void frida_loop() {
-    frida_srvTask();
-    frida_usbTask();
-    frida_cliTask();
+    frida_srvTask(NULL);
+    frida_usbTask(NULL);
+    frida_cliTask(NULL);
 }
 
 
