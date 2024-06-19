@@ -74,7 +74,21 @@ osThreadId_t usbTaskHandle;
 const osThreadAttr_t usbTask_attributes = {
   .name = "usbTask",
   .stack_size = 1024 * 4,
-  .priority = (osPriority_t) osPriorityNormal1,
+  .priority = (osPriority_t) osPriorityNormal5,
+};
+/* Definitions for cliTask */
+osThreadId_t cliTaskHandle;
+const osThreadAttr_t cliTask_attributes = {
+  .name = "cliTask",
+  .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for srvTask */
+osThreadId_t srvTaskHandle;
+const osThreadAttr_t srvTask_attributes = {
+  .name = "srvTask",
+  .stack_size = 2048 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
 
@@ -90,6 +104,8 @@ static void MX_SDMMC1_SD_Init(void);
 static void MX_SPI2_Init(void);
 void StartDefaultTask(void *argument);
 extern void frida_usbTask(void *argument);
+extern void frida_cliTask(void *argument);
+extern void frida_srvTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 /* USER CODE END PFP */
@@ -207,6 +223,12 @@ __HAL_RCC_HSEM_CLK_ENABLE();
 
   /* creation of usbTask */
   usbTaskHandle = osThreadNew(frida_usbTask, NULL, &usbTask_attributes);
+
+  /* creation of cliTask */
+  cliTaskHandle = osThreadNew(frida_cliTask, NULL, &cliTask_attributes);
+
+  /* creation of srvTask */
+  srvTaskHandle = osThreadNew(frida_srvTask, NULL, &srvTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

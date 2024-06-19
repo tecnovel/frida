@@ -7,6 +7,7 @@
 
 #include "frida.h"
 #include "frida_conf.h"
+#include "cmsis_os.h"
 
 #include "cli/src/cmd_io.h"
 
@@ -65,6 +66,15 @@ bool dns_query_proc(const char *name, uint32_t *addr) {
     return false;
 }
 
+/*
+ * @brief Callback function for logging Mongoose Server
+ */
+void log_fn(char c, void *param) {
+	char ch = c;
+	tud_cdc_write(&ch, 1);
+	tud_cdc_write_flush();
+}
+
 /**
   * @brief Initializes the Frida device.
   * @note This function initializes the FATFS filesystem, TCP/IP stack, USB, and other necessary components.
@@ -72,46 +82,46 @@ bool dns_query_proc(const char *name, uint32_t *addr) {
   */
 void frida_init(void (*blink)(void *)) {
 
-//    MX_FATFS_Init();
-//    mg_mgr_init(&mgr);        // Initialise Mongoose event manager
-//
-//    MG_INFO(("Init TCP/IP stack ..."));
-//    static struct mg_tcpip_driver driver = {.tx = usb_tx, .up = usb_up};
-//    static struct mg_tcpip_if mif = {.mac = MAC_ADDRESS,
-//                                     .ip = IP_ADDRESS,
-//                                     .mask = IP_NETMASK,
-//                                     .gw = IP_GATEWAY,
-//                                     .driver = &driver,
-//                                     .recv_queue.size = 4096};
-//
-//    s_ifp = &mif;
-//
-//    mg_tcpip_init(&mgr, &mif);
-//
-//    dhserv_init(&mgr, &dhcp_config);
-//    dnserv_init(&mgr, dns_query_proc);
-//
-//    mg_http_listen(&mgr, "http://0.0.0.0:80", fn, &mgr);
-//    if(blink != NULL){
-//    	mg_timer_add(&mgr, 500, MG_TIMER_REPEAT, blink, &mgr);
-//    }
-//
-//    MG_INFO(("Init USB ..."));
+    MX_FATFS_Init();
+
+	mg_log_set(MG_LL_DEBUG);
+//	mg_log_set_fn(log_fn, NULL);  // Use our custom log function
+	mg_mgr_init(&mgr);        // Initialise Mongoose event manager
+
+    MG_INFO(("Init TCP/IP stack ..."));
+    static struct mg_tcpip_driver driver = {.tx = usb_tx, .up = usb_up};
+    static struct mg_tcpip_if mif = {.mac = MAC_ADDRESS,
+                                     .ip = IP_ADDRESS,
+                                     .mask = IP_NETMASK,
+                                     .gw = IP_GATEWAY,
+                                     .driver = &driver,
+                                     .recv_queue.size = 4096};
+
+    s_ifp = &mif;
+
+    mg_tcpip_init(&mgr, &mif);
+
+    dhserv_init(&mgr, &dhcp_config);
+    dnserv_init(&mgr, dns_query_proc);
+
+    mg_http_listen(&mgr, "http://0.0.0.0:80", fn, &mgr);
+    if(blink != NULL){
+    	mg_timer_add(&mgr, 500, MG_TIMER_REPEAT, blink, &mgr);
+    }
+
+
     init_tud_network_mac_address();
-//
-//    fatfs_init();
-    tud_init(BOARD_TUD_RHPORT);
-//
-//    xfs_term_init(&xfs_term_usb,  sys_usb_putchar,  sys_usb_getchar);
-//    term_cmd_input_init(&cmd_input_usb, &xfs_term_usb, sys_get_hostname, TERM_NEW_LINE);
-//
-//    xfs_term_init(&xfs_term_net,  sys_net_putchar,  sys_net_getchar);
-//    term_cmd_input_init(&cmd_input_net, &xfs_term_net, sys_get_hostname, TERM_NEW_LINE);
-//
-//    MG_INFO(("Init done, starting main loop ..."));
 
+	fatfs_init();
+	tud_init(BOARD_TUD_RHPORT);
 
+    xfs_term_init(&xfs_term_usb,  sys_usb_putchar,  sys_usb_getchar);
+    term_cmd_input_init(&cmd_input_usb, &xfs_term_usb, sys_get_hostname, TERM_NEW_LINE);
 
+    xfs_term_init(&xfs_term_net,  sys_net_putchar,  sys_net_getchar);
+    term_cmd_input_init(&cmd_input_net, &xfs_term_net, sys_get_hostname, TERM_NEW_LINE);
+
+    MG_INFO(("Init done, starting main loop ..."));
 
 
 }
@@ -123,7 +133,8 @@ void frida_init(void (*blink)(void *)) {
   */
 void frida_srvTask(void *argument) {
 	while (1){
-		mg_mgr_poll(&mgr, 1000);
+		mg_mgr_poll(&mgr, 1);
+		osDelay(10);
 	}
 }
 

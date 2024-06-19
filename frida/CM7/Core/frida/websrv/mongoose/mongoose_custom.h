@@ -10,7 +10,7 @@
 #define INC_MONGOOSE_CUSTOM_H_
 
 // See https://mongoose.ws/documentation/#build-options
-#define MG_ARCH MG_ARCH_NEWLIB
+#define MG_ARCH MG_ARCH_CMSIS_RTOS2
 
 #define MG_ENABLE_TCPIP 1
 #define MG_ENABLE_CUSTOM_MILLIS 1

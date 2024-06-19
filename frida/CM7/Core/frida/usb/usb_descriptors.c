@@ -37,13 +37,6 @@ enum
 	ITF_NUM_TOTAL
 };
 
-enum
-{
-  CONFIG_ID_RNDIS = 0,
-  CONFIG_ID_ECM   = 1,
-  CONFIG_ID_COUNT
-};
-
 //--------------------------------------------------------------------+
 // Device Descriptors
 //--------------------------------------------------------------------+
@@ -68,7 +61,7 @@ tusb_desc_device_t const desc_device =
     .iProduct           = STRID_PRODUCT,
     .iSerialNumber      = STRID_SERIAL,
 
-    .bNumConfigurations = 1 // multiple configurations
+    .bNumConfigurations = 1
 };
 
 // Invoked when received GET DEVICE DESCRIPTOR
@@ -81,9 +74,7 @@ uint8_t const * tud_descriptor_device_cb(void)
 //--------------------------------------------------------------------+
 // Configuration Descriptor
 //--------------------------------------------------------------------+
-#define MAIN_CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_RNDIS_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
-#define ALT_CONFIG_TOTAL_LEN     (TUD_CONFIG_DESC_LEN + TUD_CDC_ECM_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
-
+#define MAIN_CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_CDC_NCM_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
 
 #define EPNUM_NET_NOTIF   0x81
 #define EPNUM_NET_OUT     0x02
@@ -96,13 +87,15 @@ uint8_t const * tud_descriptor_device_cb(void)
 #define EPNUM_MSC_OUT     0x05
 #define EPNUM_MSC_IN      0x85
 
-static uint8_t const rndis_configuration[] =
+static uint8_t const configuration[] =
 {
   // Config number (index+1), interface count, string index, total length, attribute, current in mA
-  TUD_CONFIG_DESCRIPTOR(CONFIG_ID_RNDIS+1, ITF_NUM_TOTAL, 0, MAIN_CONFIG_TOTAL_LEN, 0, 100),
+  TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, MAIN_CONFIG_TOTAL_LEN, 0, 100),
 
+  // Interface number, description string index, MAC address string index, EP notification address and size, EP data address (out, in), and size, max segment size.
+  TUD_CDC_NCM_DESCRIPTOR(ITF_NUM_NET, STRID_INTERFACE, STRID_MAC, EPNUM_NET_NOTIF, 64, EPNUM_NET_OUT, EPNUM_NET_IN, CFG_TUD_NET_ENDPOINT_SIZE, CFG_TUD_NET_MTU),
   // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-  TUD_RNDIS_DESCRIPTOR(ITF_NUM_NET, STRID_INTERFACE, EPNUM_NET_NOTIF, 8, EPNUM_NET_OUT, EPNUM_NET_IN, CFG_TUD_NET_ENDPOINT_SIZE),
+//  TUD_RNDIS_DESCRIPTOR(ITF_NUM_NET, STRID_INTERFACE, EPNUM_NET_NOTIF, 8, EPNUM_NET_OUT, EPNUM_NET_IN, CFG_TUD_NET_ENDPOINT_SIZE),
 
   // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
   TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, STRID_CDC, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, CFG_TUD_CDC_EP_BUFSIZE),
@@ -112,40 +105,13 @@ static uint8_t const rndis_configuration[] =
 
 };
 
-static uint8_t const ecm_configuration[] =
-{
-  // Config number (index+1), interface count, string index, total length, attribute, power in mA
-  TUD_CONFIG_DESCRIPTOR(CONFIG_ID_ECM+1, ITF_NUM_TOTAL, 0, ALT_CONFIG_TOTAL_LEN, 0, 100),
-
-// Interface number, description string index, MAC address string index, EP notification address and size, EP data address (out, in), and size, max segment size.
-  TUD_CDC_ECM_DESCRIPTOR(ITF_NUM_NET, STRID_INTERFACE, STRID_MAC, EPNUM_NET_NOTIF, 64, EPNUM_NET_OUT, EPNUM_NET_IN, CFG_TUD_NET_ENDPOINT_SIZE, CFG_TUD_NET_MTU),
-
-  // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-  TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, STRID_CDC, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, CFG_TUD_CDC_EP_BUFSIZE),
-
-
-  // Interface number, string index, EP Out & EP In address, EP size
-  TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, STRID_MSC, EPNUM_MSC_OUT, EPNUM_MSC_IN, CFG_TUD_MSC_EP_BUFSIZE),
-
-
-};
-
-// Configuration array: RNDIS and CDC-ECM
-// - Windows only works with RNDIS
-// - MacOS only works with CDC-ECM
-// - Linux will work on both
-static uint8_t const * const configuration_arr[2] =
-{
-  [CONFIG_ID_RNDIS] = rndis_configuration,
-  [CONFIG_ID_ECM  ] = ecm_configuration
-};
 
 // Invoked when received GET CONFIGURATION DESCRIPTOR
 // Application return pointer to descriptor
 // Descriptor contents must exist long enough for transfer to complete
 uint8_t const * tud_descriptor_configuration_cb(uint8_t index)
 {
-  return (index < CONFIG_ID_COUNT) ? configuration_arr[index] : NULL;
+  return configuration;
 }
 
 //--------------------------------------------------------------------+

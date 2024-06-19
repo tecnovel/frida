@@ -37,7 +37,7 @@ void broadcast_message(const char *message) {
   }
 }
 
-#define BUFFER_SIZE 128
+#define BUFFER_SIZE 64
 char input_buffer[BUFFER_SIZE];
 int buffer_start = 0, buffer_end = 0;
 
@@ -93,7 +93,7 @@ void fn(struct mg_connection *c, int ev, void *ev_data) {
 				.root_dir = "/www",
 				.fs = &mg_fs_fat
 			};
-			mg_http_serve_dir(c, ev_data, &opts);
+
 		}
 		break;
 	case MG_EV_WS_MSG:
